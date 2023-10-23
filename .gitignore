@@ -47,3 +47,12 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# slurm output
+slurm*
+*.out
+
+# data
+genotype/
+phenotype/
+
