@@ -1,0 +1,4 @@
+TabError in file <string>, line 5:
+inconsistent use of tabs and spaces in indentation (<string>, line 5)
+  File "/shared/Software/micromamba/envs/snakemake/lib/python3.12/tokenize.py", line 541, in _generate_tokens_from_c_tokenizer
+  File "/shared/Software/micromamba/envs/snakemake/lib/python3.12/tokenize.py", line 537, in _generate_tokens_from_c_tokenizer

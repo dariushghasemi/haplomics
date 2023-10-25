@@ -1,0 +1,70 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job          count
+---------  -------
+all              1
+get_locus        3
+total            4
+
+Select jobs to execute...
+
+[Wed Oct 25 18:23:48 2023]
+rule get_locus:
+    input: 01_subsetting_vcf.sh, locus_window.txt
+    output: genotype/SLC34A1.vcf.gz
+    jobid: 2
+    reason: Missing output files: genotype/SLC34A1.vcf.gz
+    wildcards: locus=SLC34A1
+    resources: tmpdir=/tmp
+
+[Wed Oct 25 18:24:07 2023]
+Finished job 2.
+1 of 4 steps (25%) done
+Select jobs to execute...
+
+[Wed Oct 25 18:24:07 2023]
+rule get_locus:
+    input: 01_subsetting_vcf.sh, locus_window.txt
+    output: genotype/IGF1R.vcf.gz
+    jobid: 3
+    reason: Missing output files: genotype/IGF1R.vcf.gz
+    wildcards: locus=IGF1R
+    resources: tmpdir=/tmp
+
+Warning: the following output files of rule get_locus were not present when the DAG was created:
+{'genotype/IGF1R.vcf.gz'}
+[Wed Oct 25 18:24:14 2023]
+Finished job 3.
+2 of 4 steps (50%) done
+Select jobs to execute...
+
+[Wed Oct 25 18:24:14 2023]
+rule get_locus:
+    input: 01_subsetting_vcf.sh, locus_window.txt
+    output: genotype/PDILT.vcf.gz
+    jobid: 1
+    reason: Missing output files: genotype/PDILT.vcf.gz
+    wildcards: locus=PDILT
+    resources: tmpdir=/tmp
+
+Warning: the following output files of rule get_locus were not present when the DAG was created:
+{'genotype/PDILT.vcf.gz'}
+[Wed Oct 25 18:24:20 2023]
+Finished job 1.
+3 of 4 steps (75%) done
+Select jobs to execute...
+
+[Wed Oct 25 18:24:20 2023]
+localrule all:
+    input: genotype/PDILT.vcf.gz, genotype/SLC34A1.vcf.gz, genotype/IGF1R.vcf.gz
+    jobid: 0
+    reason: Input files updated by another job: genotype/IGF1R.vcf.gz, genotype/SLC34A1.vcf.gz, genotype/PDILT.vcf.gz
+    resources: tmpdir=/tmp
+
+[Wed Oct 25 18:24:20 2023]
+Finished job 0.
+4 of 4 steps (100%) done
+Complete log: .snakemake/log/2023-10-25T182347.314686.snakemake.log
