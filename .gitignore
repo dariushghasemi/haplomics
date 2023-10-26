@@ -10,7 +10,7 @@
 .Ruserdata
 
 # Example code in package build process
-*-Ex.R
+#*-Ex.R
 
 # Output files from R CMD build
 /*.tar.gz
@@ -55,4 +55,15 @@ slurm*
 # data
 genotype/
 phenotype/
+
+# Snakemake files
+.snakemake/*
+
+# extracted dosage, variants, annotataion
+annotation/
+
+#generated plots
+output/
+
+*.pdf
 

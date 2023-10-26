@@ -13,7 +13,7 @@ bcftools index -n CHRIS13K.WES.imputed.rsq03.vep.hg38.sorted.bgzip.vcf.gz
 1033325
 
 # lifted and sorted imputed WES - b38
-zcat /scratch/compgen/data/genetics/CHRIS13K/Imputation/WES/CHRIS13K.WES.imputed.rsq03.vep.hg38.zip.vcf.gz |cut -f1-3 | grep -v "#" | wc -l
+zcat /scratch/compgen/data/genetics/CHRIS13K/Imputation/WES/CHRIS13K.WES.imputed.rsq03.vep.hg38.zip.vcf.gz | cut -f1-3 | grep -v "#" | wc -l
 1033325
 ```
 
@@ -49,13 +49,29 @@ rule two:
 		get_ranges()
 
 
-
+direct = directory("genotype/{locus}"),
 
 output:
 	odir = directory("genotype/{locus}"),
 	ofile = "genotype/{locus}/{locus}.vcf.gz"
+
+rule all:
+	input:
+		"genotype/PDILT.vcf.gz",
+		"genotype/SLC34A1.vcf.gz",
+		"genotype/IGF1R.vcf.gz",
+		"genotype/PDILT_dosage.txt",
+		"genotype/SLC34A1_dosage.txt",
+		"genotype/IGF1R_dosage.txt",
+		"genotype/PDILT_variants.list",
+		"genotype/SLC34A1_variants.list",
+		"genotype/IGF1R_variants.list"
+
+# or 
+# Determine the {vcf} for all loci
+#vcf, = glob_wildcards("genotype/{locus}.vcf.gz")
+#dosag, = glob_wildcards("genotype/{locus}_dosage.txt")
+#annot, = glob_wildcards("genotype/{locus}_variants.list")
+
 ```
-
-
-
-
+- Allele frequency of the extracted variants at each locus was depicted by a histogram (Thu, 18:42, 26-Oct-23).
