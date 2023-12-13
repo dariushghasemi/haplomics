@@ -15,7 +15,7 @@ library(ggplot2)
 
 #------------------------#
 # define the columns names
-variants_header = c("CHROM", "POS", "ID", "REF", "ALT", "AF")
+variants_header <- c("CHROM", "POS", "ID", "REF", "ALT", "AF")
 
 # read the varinats_file
 df_variants <- data.table::fread(variants_file, header = FALSE, sep = "\t", col.names = variants_header)

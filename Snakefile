@@ -17,7 +17,7 @@ rule all:
 #------------------------#
 rule get_locus:
 	input:
-		script = "01_subsetting_vcf.sh",
+		script = "01-1_subsetting_vcf.sh",
 		position = "locus_window.txt"
 	output:
 		vcf = "genotype/{locus}.vcf.gz",
@@ -32,7 +32,7 @@ rule get_locus:
 #------------------------#
 rule get_dosage:
 	input:
-		script = "03_extracting_dosage.sh",
+		script = "01-2_extracting_dosage.sh",
 		vcf = "genotype/{locus}.vcf.gz",
 		sentinel = "annotation/{locus}.sentinel"
 	output:
@@ -49,7 +49,7 @@ rule get_dosage:
 #------------------------#
 rule plot_histogram:
 	input:
-		script = "04_plot_histogram.R",
+		script = "01-3_plot_histogram.R",
 		variants = "annotation/{locus}_variants.list",
 	output:
 		plot = "output/26-Oct-23_plot_histo_{locus}.png",
@@ -62,8 +62,21 @@ rule plot_histogram:
 
 		"""
 #------------------------#
-	
-ruleorder: get_locus > get_dosage > plot_histogram
+rule build_haplotypes:
+	input:
+		script = "03-1_building_haplotypes.R",
+		dosage = "genotype/{locus}_dosage.txt",
+	output:
+		result = "output/*_{locus}_*.RDS"
+	params:
+		dosage = "genotype/{locus}_dosage.txt",
+	shell:
+		"""
+		Rscript {input.script} {input.dosage}
+		"""
+#------------------------#
+
+ruleorder: get_locus > get_dosage > plot_histogram > build_haplotypes
 
 #------------------------#
 
