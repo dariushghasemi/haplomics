@@ -24,7 +24,7 @@ bcftools query -f '[%SAMPLE\t%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\t%DS\n]' genotyp
 bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\n' genotype/${locus}.vcf.gz -o annotation/${locus}_variants.list
 
 # extract variants annotation
-bcftools +split-vep  -s worst -f '%ID\t%SYMBOL\t%Gene\t%Consequence\n' genotype/${locus}.vcf.gz -o annotation/${locus}_annotation.txt
+bcftools +split-vep  -s worst -f '%CHROM\t%POS\t%ID\t%SYMBOL\t%Gene\t%Consequence\n' genotype/${locus}.vcf.gz -o annotation/${locus}_annotation.txt
 
 #------------------------#
 # ending message!

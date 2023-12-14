@@ -33,5 +33,5 @@ df_variants %>%
 
 #------------------------#
 # saving the histogram
-ggsave(paste0("output/26-Oct-23_plot_histo_", locus_name ,".png"), #, 
+ggsave(paste0("output/26-Oct-23_plot_histo_", locus_name ,".png"),
        last_plot(), width = 9, height = 5.5, dpi = 300, units = "in")
