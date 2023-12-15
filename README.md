@@ -74,4 +74,24 @@ rule all:
 #annot, = glob_wildcards("genotype/{locus}_variants.list")
 
 ```
-- Allele frequency of the extracted variants at each locus was depicted by a histogram (Thu, 18:42, 26-Oct-23).
+- Allele frequency of the extracted variants at each locus was depicted using `01-3_plot_histogram.R` (Thu, 18:42, 26-Oct-23).
+
+- Add haplotype reconstruction script to the pipeline using `03-1_haplotypes_building.R` (Wed, 16:50, 13-Dec-23).
+
+- Draw the workflow diagram (Wed, 13-Dec-23).
+
+```bash
+snakemake --dag targets | dot -Tpng > Tag.png
+```
+
+- Add visualization of the recnstructed haplotype to the workflow (Wed, 21:30, 13-Dec-23).
+
+- Haplotypes plot were generated in two version, full variants and shrinked variants, using `03-2_plot_haplotypes.R` (Thu, 20:16, 14-Dec-23)
+
+- Variants consequences were visulalized for each locus using `01-4_plot_annotation.R` (Fri, 02:02, 15-Dec-23).
+
+- Working to add heatmap plot to visualize the haplotypes associations results using `03-3_haplotypes_heatmap.R` (Fri, 18:10, 15-Dec-23).
+
+- Meanwhile, I'm going attend at Eurac X-Mass party at NOI techpark (Fri, 18:10, 15-Dec-23).
+
+Dariush

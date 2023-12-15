@@ -39,7 +39,7 @@ locus_name
 # directories
 
 base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis"
-out.dir  <- paste0(base.dir, "/output")
+out.dir  <- paste0(base.dir, "/output/result_associations")
 traits_blood   <- "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_q-norm.csv"
 principal_comp <- "/home/dghasemisemeskandeh/projects/HaploReg/data/CHRIS13K.GT.evecs"
 output.full    <- paste0(out.dir, "/", today.date, "_", locus_name, "_association_results_full1.RDS")
@@ -134,7 +134,7 @@ merged_data <- genome %>%
     Sex,
     Age,
     eGFRw,
-    #all_of(phenome),
+    all_of(phenome[c(3,6,7,9)]),
     #-FT3,
     #-FT4
     )
@@ -143,7 +143,7 @@ merged_data <- genome %>%
     across(c("Age", any_of(phenome)), as.numeric),
     across(c("Sex"), as.factor)
     ) %>%
-  slice_head(n = 1000) %>%
+  #slice_head(n = 6000) %>%
   inner_join(prc_comp, by = "AID")
 
 
@@ -273,3 +273,5 @@ saveRDS(results_shrinked, output.short)
 #----------#
 # print time and date
 Sys.time()
+
+#sbatch --wrap 'Rscript 03-1_haplotypes_building.R genotype/PDILT_dosage.txt' -c 2 --mem-per-cpu=16GB -J "03-1_PDILT.R"

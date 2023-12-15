@@ -5,6 +5,13 @@
 loci = "SLC34A1 PDILT IGF1R".split()
 
 #------------------------#
+from datetime import date
+
+today = date.today()
+formatted_date = today.strftime('%d-%b-%y')
+#print("Today is:", formatted_date)
+
+#------------------------#
 # a pseudo-rule that collects the target files
 rule all:
 	input:
@@ -12,7 +19,12 @@ rule all:
 		expand("genotype/{locus}_dosage.txt", locus = loci),
 		expand("annotation/{locus}_variants.list", locus = loci),
 		expand("annotation/{locus}_annotation.txt", locus = loci),
-		expand("output/26-Oct-23_plot_histo_{locus}.png", locus = loci)
+		expand("output/26-Oct-23_plot_histo_{locus}.png", locus = loci),
+		expand("output/plot_annotations/{day}_{locus}_plot_annotations.png", locus = loci, day = formatted_date),
+		expand("output/result_associations/{day}_{locus}_association_results_full1.RDS", locus = loci, day = formatted_date),
+		expand("output/result_associations/{day}_{locus}_association_results_short1.RDS", locus = loci, day = formatted_date),
+		expand("output/plot_haplotypes/{day}_{locus}_plot_haplotypes.png", locus = loci, day = formatted_date),
+		expand("output/plot_haplotypes/{day}_{locus}_plot_haplotypes_shrinked.png", locus = loci, day = formatted_date)
 
 #------------------------#
 rule get_locus:
@@ -45,7 +57,6 @@ rule get_dosage:
 		"""
 		bash {input.script} {input.vcf}
 		"""
-
 #------------------------#
 rule plot_histogram:
 	input:
@@ -59,24 +70,55 @@ rule plot_histogram:
 	shell:
 		"""
 		Rscript {input.script} {input.variants}
-
+		"""
+#------------------------#
+rule plot_annotation:
+	input:
+		script = "01-4_plot_annotation.R",
+		annotation = "annotation/{locus}_annotation.txt",
+	output:
+		plot = "output/plot_annotations/{day}_{locus}_plot_annotations.png",
+	params:
+		file = "annotation/{locus}_annotation.txt",
+	shell:
+		"""
+		Rscript {input.script} {input.annotation}
 		"""
 #------------------------#
 rule build_haplotypes:
 	input:
-		script = "03-1_building_haplotypes.R",
+		script = "03-1_haplotypes_building.R",
 		dosage = "genotype/{locus}_dosage.txt",
 	output:
-		result = "output/*_{locus}_*.RDS"
+		result_full  = "output/result_associations/{day}_{locus}_association_results_full1.RDS",
+		result_short = "output/result_associations/{day}_{locus}_association_results_short1.RDS",
 	params:
-		dosage = "genotype/{locus}_dosage.txt",
+		file = "genotype/{locus}_dosage.txt",
 	shell:
 		"""
 		Rscript {input.script} {input.dosage}
 		"""
 #------------------------#
+rule plot_haplotypes:
+	input:
+		script = "03-2_haplotypes_plot.R",
+		associations = "output/result_associations/{day}_{locus}_association_results_short1.RDS",
+		annotation = "annotation/{locus}_annotation.txt",
+		variants = "annotation/{locus}_variants.list",
+	output:
+		plot1 = "output/plot_haplotypes/{day}_{locus}_plot_haplotypes.png",
+		plot2 = "output/plot_haplotypes/{day}_{locus}_plot_haplotypes_shrinked.png",
+	params:
+		associations = "output/result_associations/{day}_{locus}_association_results_short1.RDS",
+		annotation = "annotation/{locus}_annotation.txt",
+		variants = "annotation/{locus}_variants.list",
+	shell:
+		"""
+		Rscript {input.script} {input.associations} {input.annotation} {input.variants}
+		"""
+#------------------------#
 
-ruleorder: get_locus > get_dosage > plot_histogram > build_haplotypes
+ruleorder: get_locus > get_dosage > plot_histogram > plot_annotation > build_haplotypes > plot_haplotypes
 
 #------------------------#
 

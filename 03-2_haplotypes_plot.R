@@ -61,7 +61,6 @@ results <- readRDS(rds_file)
 #-----------------------------------------------------#
 
 # shaping the results for haplotypes plot
-
 prepare_annotation <- function(df) {
   df %>%
   as_tibble() %>%
