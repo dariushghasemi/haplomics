@@ -19,7 +19,7 @@ rule all:
 		expand("genotype/{locus}_dosage.txt", locus = loci),
 		expand("annotation/{locus}_variants.list", locus = loci),
 		expand("annotation/{locus}_annotation.txt", locus = loci),
-		expand("output/26-Oct-23_plot_histo_{locus}.png", locus = loci),
+		expand("output/plot_histogram/{day}_{locus}_plot_histo.png", locus = loci, day = formatted_date),
 		expand("output/plot_annotations/{day}_{locus}_plot_annotations.png", locus = loci, day = formatted_date),
 		expand("output/result_associations/15-Dec-23_{locus}_association_results_full1.RDS", locus = loci),
 		expand("output/result_associations/15-Dec-23_{locus}_association_results_short1.RDS", locus = loci),
@@ -65,8 +65,7 @@ rule plot_histogram:
 		script = "01-3_plot_histogram.R",
 		variants = "annotation/{locus}_variants.list",
 	output:
-		plot = "output/26-Oct-23_plot_histo_{locus}.png",
-
+		plot = "output/plot_histogram/{day}_{locus}_plot_histo.png",
 	params:
 		file = "annotation/{locus}_variants.list",
 	shell:

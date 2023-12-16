@@ -1,13 +1,24 @@
 #!/usr/bin/Rscript
 
+#----------#
+# print time and date
+Sys.time()
 
+# date
+today.date <- format(Sys.Date(), "%d-%b-%y")
+
+#----------#
 # taking variants file as input
 args <- commandArgs(trailingOnly = TRUE)
-
 variants_file <- args[1]
 
 # taking the locus name
 locus_name  <- gsub("_variants.list", "", basename(variants_file))
+locus_name
+
+#----------#
+out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_histogram"
+out.plt <- paste0(out.dir, "/", today.date, "_", locus_name, "_plot_histo.org")
 
 #------------------------#
 library(dplyr)
@@ -21,7 +32,7 @@ variants_header <- c("CHROM", "POS", "ID", "REF", "ALT", "AF")
 df_variants <- data.table::fread(variants_file, header = FALSE, sep = "\t", col.names = variants_header)
 
 #------------------------#
-df_variants %>%
+af_histo <- df_variants %>%
   # making allele freq consistent for whole variant to have AF<0.5
   mutate(AF_compl = if_else(AF <= 0.5, AF, 1 - AF)) %>%
   ggplot(aes(AF_compl)) +
@@ -33,5 +44,4 @@ df_variants %>%
 
 #------------------------#
 # saving the histogram
-ggsave(paste0("output/26-Oct-23_plot_histo_", locus_name ,".png"),
-       last_plot(), width = 9, height = 5.5, dpi = 300, units = "in")
+ggsave(af_histo, filename = out.plt, width = 9, height = 5.5, dpi = 300, units = "in")
