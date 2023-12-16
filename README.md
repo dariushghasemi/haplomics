@@ -94,4 +94,10 @@ snakemake --dag targets | dot -Tpng > Tag.png
 
 - Meanwhile, I'm going attend at Eurac X-Mass party at NOI techpark (Fri, 18:10, 15-Dec-23).
 
+- Heatmap plots of haplotypes associations with the traits were added to the pipeline using `03-3_haplotypes_heatmap.R`.
+
+- The Rmarkdown report was generated using `04-0_report.Rmd`.
+
+- The Rmarkdown report was automated for the loci using `04-1_report_run.sh` (Sat, 22:16, 16-Dec-23).
+
 Dariush

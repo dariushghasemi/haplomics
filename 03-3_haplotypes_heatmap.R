@@ -24,9 +24,9 @@ locus_name
 
 #------------#
 # directories
-base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/result_associations"
-results.full <- paste0(base.dir, "/", today.date, "_", locus_name, "_association_results_full1.RDS")
-out.plot <- paste0(base.dir, "/output/plot_annotations/", today.date, "_", locus_name, "_plot_annotations.png")
+base.dir     <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output"
+results.full <- paste0(base.dir, "/result_associations/", today.date, "_", locus_name, "_association_results_full1.RDS")
+out.plot     <- paste0(base.dir, "/plot_heatmaps/",       today.date, "_", locus_name, "_plot_heatmap_haplotypes_effect.png")
 
 #------------#
 # function to install uninstalled required packages
@@ -56,13 +56,79 @@ res_to_heat <- function(df){
                               "(?<=\\.)\\d{1,2}(?!\\d)",
                               sprintf("%03d", as.numeric(str_extract(term, "(?<=\\.)\\d{1,2}(?!\\d)")))),
            term = str_replace(term, "haplo_genotype.", "H")) %>%
-    filter(!str_detect(term, "(Intercept)|PC|Sex|Age|rare"))
+    filter(!str_detect(term, "(Intercept)|PC|Sex|Age|rare")) %>%
+    # reshaping results for pheatmap
+  select(trait_name, term, estimate) %>%
+  left_join(haplo_dict, by = c("trait_name" = "trait_name", "term" = "Haplotype")) %>%
+  select(- term) %>%
+  pivot_wider(names_from = trait_name, values_from = estimate)
 }
 
 #----------#
+
+
+# Function to generate a unique name for each unique combination of variants
+change_haplo_name <- function(df) {
+  if (all(df$Haplotype == "Ref.")) {
+    return("Ref.")  # Keep "Ref." if the haplotype is identical across traits
+  } else {
+  # Exclude trait_name and Haplotype columns
+  uniq_haplo <- unique(df[, -c(1, 2)])
+  # Remove column names to ensure proper comparison
+  names(uniq_haplo) <- NULL
+  hash <- apply(uniq_haplo, 1, function(x) paste(x, collapse = "_"))
+  haplo_names <- setNames(paste0("H", seq_along(hash)), hash)
+  return(haplo_names)
+  }
+}
+
+
+haplo_dict <- readRDS(rds_file) %>%
+  ungroup() %>% 
+  select(trait_name, haplotype) %>% 
+  unnest(haplotype) %>% 
+  select(- hap.freq) %>%
+  filter(Haplotype != "Hrare") %>%
+  group_by(trait_name) %>%
+  mutate(
+    haplo_name = change_haplo_name(.),
+    haplo_name = if_else(Haplotype == "Ref.", "Ref.", haplo_name)
+  ) %>%
+  ungroup() %>%
+  select(trait_name, Haplotype, haplo_name)
+
+#print(haplo_dict[c("trait_name", "Haplotype", "haplo_name")], n = 20)
+
 # Reading and manipulating the association results for illustartion
 # 01: Blood biomarkers, 02: Proteins, 03: Metabolites
-#results_heatmap <- 
+results_heatmap <- readRDS(rds_file) %>% res_to_heat()
+results_heatmap
 
-readRDS(rds_file) %>% #select(- haplotype) %>%
-    unnest(tidy) #res_to_heat()
+quit()
+#------------#
+# pheatmap
+png(out.plot, units = "in", res = 500, width = 12, height = 6)
+
+pheatmap(results_heatmap[-1],
+         #color = hcl.colors(50, "Blue-Red 2"),
+         #breaks = seq(-rg, rg, length.out = 100), #rg <- max(abs(results_heatmap[-1]))
+         #color = myColor, 
+         #breaks = myBreaks,
+         labels_row = results_heatmap$haplo_name,
+         #display_numbers = results_omics_pval[-1],
+         number_color = "gold",
+         cluster_cols = T,
+         cluster_rows = T,
+         clustering_method = "ward.D2",
+         na_col = "white",
+         border_color = NA, 
+         #annotation_col = annot_omics,
+         #annotation_colors = annot_colors,
+         #display_numbers = F,
+         fontsize_number = 15,
+         fontsize_row = 10,
+         fontsize_col = 10,
+         angle_col = "270")
+
+dev.off()
+

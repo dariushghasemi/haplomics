@@ -10,7 +10,7 @@ from datetime import date
 today = date.today()
 formatted_date = today.strftime('%d-%b-%y')
 #print("Today is:", formatted_date)
-
+myday = '15-Dec-23'
 #------------------------#
 # a pseudo-rule that collects the target files
 rule all:
@@ -21,10 +21,12 @@ rule all:
 		expand("annotation/{locus}_annotation.txt", locus = loci),
 		expand("output/26-Oct-23_plot_histo_{locus}.png", locus = loci),
 		expand("output/plot_annotations/{day}_{locus}_plot_annotations.png", locus = loci, day = formatted_date),
-		expand("output/result_associations/{day}_{locus}_association_results_full1.RDS", locus = loci, day = formatted_date),
-		expand("output/result_associations/{day}_{locus}_association_results_short1.RDS", locus = loci, day = formatted_date),
+		expand("output/result_associations/15-Dec-23_{locus}_association_results_full1.RDS", locus = loci),
+		expand("output/result_associations/15-Dec-23_{locus}_association_results_short1.RDS", locus = loci),
 		expand("output/plot_haplotypes/{day}_{locus}_plot_haplotypes.png", locus = loci, day = formatted_date),
-		expand("output/plot_haplotypes/{day}_{locus}_plot_haplotypes_shrinked.png", locus = loci, day = formatted_date)
+		expand("output/plot_haplotypes/{day}_{locus}_plot_haplotypes_shrinked.png", locus = loci, day = formatted_date),
+		expand("output/plot_heatmaps/{day}_{locus}_plot_heatmap_haplotypes_effect.png", locus = loci, day = formatted_date)
+
 
 #------------------------#
 rule get_locus:
@@ -90,8 +92,8 @@ rule build_haplotypes:
 		script = "03-1_haplotypes_building.R",
 		dosage = "genotype/{locus}_dosage.txt",
 	output:
-		result_full  = "output/result_associations/{day}_{locus}_association_results_full1.RDS",
-		result_short = "output/result_associations/{day}_{locus}_association_results_short1.RDS",
+		result_full  = "output/result_associations/15-Dec-23_{locus}_association_results_full1.RDS",
+		result_short = "output/result_associations/15-Dec-23_{locus}_association_results_short1.RDS",
 	params:
 		file = "genotype/{locus}_dosage.txt",
 	shell:
@@ -102,14 +104,14 @@ rule build_haplotypes:
 rule plot_haplotypes:
 	input:
 		script = "03-2_haplotypes_plot.R",
-		associations = "output/result_associations/{day}_{locus}_association_results_short1.RDS",
+		associations = "output/result_associations/15-Dec-23_{locus}_association_results_short1.RDS",
 		annotation = "annotation/{locus}_annotation.txt",
 		variants = "annotation/{locus}_variants.list",
 	output:
 		plot1 = "output/plot_haplotypes/{day}_{locus}_plot_haplotypes.png",
 		plot2 = "output/plot_haplotypes/{day}_{locus}_plot_haplotypes_shrinked.png",
 	params:
-		associations = "output/result_associations/{day}_{locus}_association_results_short1.RDS",
+		associations = "output/result_associations/15-Dec-23_{locus}_association_results_short1.RDS",
 		annotation = "annotation/{locus}_annotation.txt",
 		variants = "annotation/{locus}_variants.list",
 	shell:
@@ -117,8 +119,20 @@ rule plot_haplotypes:
 		Rscript {input.script} {input.associations} {input.annotation} {input.variants}
 		"""
 #------------------------#
-
-ruleorder: get_locus > get_dosage > plot_histogram > plot_annotation > build_haplotypes > plot_haplotypes
+rule plot_associations:
+	input:
+		script = "03-3_haplotypes_heatmap.R",
+		associations = "output/result_associations/15-Dec-23_{locus}_association_results_full1.RDS",
+	output:
+		plot = "output/plot_heatmaps/{day}_{locus}_plot_heatmap_haplotypes_effect.png",
+	params:
+		associations = "output/result_associations/15-Dec-23_{locus}_association_results_full1.RDS",
+	shell:
+		"""
+		Rscript {input.script} {input.associations}
+		"""
+#------------------------#
+ruleorder: get_locus > get_dosage > plot_histogram > plot_annotation > build_haplotypes > plot_haplotypes > plot_associations
 
 #------------------------#
 

@@ -1,0 +1,65 @@
+
+---
+title: "params$LOCUS Haplotype Analysis Report"
+author: Dariush Ghasemi
+params:
+  date: !r Sys.Date()
+  LOCUS: "PDILT"
+output: html_notebook
+---
+
+```{r, echo=FALSE}
+#date: !r Sys.Date()
+Sys.Date()
+```
+
+```{r, echo=FALSE}
+density    <- paste0("output/plot_histogram/", "26-Oct-23_plot_histo_", params$LOCUS, ".png")
+annotation <- paste0("output/plot_annotations/15-Dec-23_", params$LOCUS, "_plot_annotations.png")
+haplotypes <- paste0("output/plot_haplotypes/14-Dec-23_", params$LOCUS, "_plot_haplotypes_shrinked.png")
+heatmap    <- paste0("output/plot_heatmaps/16-Dec-23_", params$LOCUS, "_plot_heatmap_haplotypes_effect.png")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+# [install the libraries before if not already installed]
+# Loading libraries 
+library(knitr)
+library(rmarkdown)
+```
+
+## Introduction
+This is a report of Haplotype reconstrauction analysis for $LOCUS generated using RMarkdown.
+
+
+## Plot Allele Frequency
+
+```{r histogram, echo=FALSE, fig.cap="Density", out.width='80%'}
+
+knitr::include_graphics(density)
+```
+
+## Plot Variants Annotation
+
+```{r annotation, echo=FALSE, fig.cap="Annotation of exonic variants", out.width='80%'}
+
+knitr::include_graphics(annotation)
+```
+
+## Plot Haplotypes
+
+```{r haplotypes, echo=TRUE, fig.cap="Haplotypes", out.width='75%'}
+
+knitr::include_graphics(haplotypes)
+```
+
+## Plot Heatmap
+
+```{r heatmap, echo=FALSE, fig.cap="Heatmap Plot", out.width='90%'}
+
+knitr::include_graphics(heatmap)
+```
+
