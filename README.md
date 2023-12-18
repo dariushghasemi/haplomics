@@ -100,4 +100,16 @@ snakemake --dag targets | dot -Tpng > Tag.png
 
 - The Rmarkdown report was automated for the loci using `04-1_report_run.sh` (Sat, 22:16, 16-Dec-23).
 
+```bash
+# limit the job run to just one rule (-n for a dry-run)
+snakemake -R --until plot_associations -n
+
+```
+- The frequency of the variants of each gene at the input locus was depicted using `01-5_plot_genes.R` (Mon, 14:20, 18-Dec-23).
+
+- Trying to run the jobs on clusters using below (Mon, 18:40, 18-dec-23):
+```bash
+snakemake --latency-wait 60 --use-conda --cluster-config cluster.yaml --cluster "sbatch -p {cluster.partition}  --mem-per-cpu={cluster.mem} -c {cluster.cores}" --jobs 20
+```
+
 Dariush
