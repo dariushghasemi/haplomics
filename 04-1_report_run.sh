@@ -11,6 +11,7 @@ if [ -z "$1" ]; then
 fi
 
 LOCUS=$1
+OUT=output/report_html/18-Dec-23_${LOCUS}_report.html
 
 # Render the RMarkdown file
-R -e "rmarkdown::render('04-0_report.Rmd', output_file = paste0('report_', '$LOCUS', '.html'), params = list(LOCUS = '$LOCUS'))"
+R -e "rmarkdown::render('04-0_report.Rmd', output_file = paste0('$OUT'), params = list(LOCUS = '$LOCUS'))"

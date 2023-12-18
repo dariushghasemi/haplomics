@@ -1,23 +1,35 @@
 
 ---
-title: "params$LOCUS Haplotype Analysis Report"
+title: "Haplotype Analysis Report for *`r params$LOCUS`*"
 author: Dariush Ghasemi
 params:
   date: !r Sys.Date()
   LOCUS: "PDILT"
 output: html_notebook
+format: 
+  revealjs:
+    transition: slide,
+    background-transition: fade
+editor: visual
 ---
+
+### Date: `r format(Sys.Date(), "%B %d, %Y")`
 
 ```{r, echo=FALSE}
 #date: !r Sys.Date()
-Sys.Date()
+#Sys.Date()
 ```
 
 ```{r, echo=FALSE}
-density    <- paste0("output/plot_histogram/", "26-Oct-23_plot_histo_", params$LOCUS, ".png")
-annotation <- paste0("output/plot_annotations/15-Dec-23_", params$LOCUS, "_plot_annotations.png")
-haplotypes <- paste0("output/plot_haplotypes/14-Dec-23_", params$LOCUS, "_plot_haplotypes_shrinked.png")
-heatmap    <- paste0("output/plot_heatmaps/16-Dec-23_", params$LOCUS, "_plot_heatmap_haplotypes_effect.png")
+# date
+today.date <- format(Sys.Date(), "%d-%b-%y")
+
+regional   <- paste0("~/projects/gwas/05_regional_association/LZ_plots/09-Mar-23_", params$LOCUS, "-1.png")
+density    <- paste0("output/plot_histogram/", today.date, "_plot_histo_", params$LOCUS, ".png")
+annotation <- paste0("output/plot_annotations/", today.date, params$LOCUS, "_plot_annotations.png")
+genes      <- paste0("output/plot_genes/", today.date, params$LOCUS, "_plot_genes.png")
+haplotypes <- paste0("output/plot_haplotypes/", today.date, params$LOCUS, "_plot_haplotypes_shrinked.png")
+heatmap    <- paste0("output/plot_heatmaps/", today.date, params$LOCUS, "_plot_heatmap_haplotypes_effect.png")
 ```
 
 ```{r setup, include=FALSE}
@@ -29,30 +41,38 @@ knitr::opts_chunk$set(echo = TRUE)
 # Loading libraries 
 library(knitr)
 library(rmarkdown)
+#install.libraries("patchwork")
+#install.packages("cowplot")
+library(cowplot)
+#library(ggplot2)
 ```
 
 ## Introduction
-This is a report of Haplotype reconstrauction analysis for $LOCUS generated using RMarkdown.
+This is a report of Haplotype reconstrauction analysis for *`r params$LOCUS`* generated using RMarkdown.
 
 
-## Plot Allele Frequency
+## Plot Regional Association
 
-```{r histogram, echo=FALSE, fig.cap="Density", out.width='80%'}
-
-knitr::include_graphics(density)
+```{r histogram, echo=FALSE, fig.cap="Density", out.width='70%'}
+knitr::include_graphics(regional)
 ```
 
-## Plot Variants Annotation
+## Plot Variants Frequency, Annotation and Allele Frequency
 
-```{r annotation, echo=FALSE, fig.cap="Annotation of exonic variants", out.width='80%'}
+```{r Variants, echo=FALSE, fig.cap="Number and annotation of exonic variants in each gene", fig.align = "default", fig.subcap=c('a','b', 'c'), out.width='70%'}
+#p1 <- ggdraw() + draw_image(genes)
+#p2 <- ggdraw() + draw_image(density)
+#p3 <- ggdraw() + draw_image(annotation)
+#plot_grid(p1, p2, p3, cnol = 2)
 
+knitr::include_graphics(genes)
 knitr::include_graphics(annotation)
+knitr::include_graphics(density)
 ```
 
 ## Plot Haplotypes
 
-```{r haplotypes, echo=TRUE, fig.cap="Haplotypes", out.width='75%'}
-
+```{r haplotypes, figures-side, echo=FALSE, fig.cap="Haplotypes", fig.show="hold", out.width='80%'}
 knitr::include_graphics(haplotypes)
 ```
 
@@ -62,4 +82,3 @@ knitr::include_graphics(haplotypes)
 
 knitr::include_graphics(heatmap)
 ```
-
