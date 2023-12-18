@@ -104,7 +104,6 @@ haplo_dict <- readRDS(rds_file) %>%
 results_heatmap <- readRDS(rds_file) %>% res_to_heat()
 results_heatmap
 
-quit()
 #------------#
 # pheatmap
 png(out.plot, units = "in", res = 500, width = 12, height = 6)
@@ -117,8 +116,8 @@ pheatmap(results_heatmap[-1],
          labels_row = results_heatmap$haplo_name,
          #display_numbers = results_omics_pval[-1],
          number_color = "gold",
-         cluster_cols = T,
-         cluster_rows = T,
+         cluster_cols = F,
+         cluster_rows = F,
          clustering_method = "ward.D2",
          na_col = "white",
          border_color = NA, 

@@ -39,12 +39,14 @@ locus_name
 #----------#
 # directories
 
-base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis"
-out.dir  <- paste0(base.dir, "/output/result_associations")
-traits_blood   <- "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_q-norm.csv"
-principal_comp <- "/home/dghasemisemeskandeh/projects/HaploReg/data/CHRIS13K.GT.evecs"
-output.full    <- paste0(out.dir, "/", today.date, "_", locus_name, "_association_results_full1.RDS")
-output.short   <- paste0(out.dir, "/", today.date, "_", locus_name, "_association_results_short1.RDS")
+base.dir <- "/home/dghasemisemeskandeh/projects"
+out.dir  <- paste0(base.dir, "/haploAnalysis/output/result_associations")
+data.dir <- paste0(base.dir, "/HaploReg/data")
+traits_blood   <- paste0(data.dir, "/chris_q-norm.csv")
+principal_comp <- paste0(data.dir, "/CHRIS13K.GT.evecs")
+output.data    <- paste0(base.dir, "/haploAnalysis/data/", locus_name, "_haplotypes_data.csv")
+output.full    <- paste0(out.dir, "/", locus_name, "_association_results_full1.RDS") #today.date, "_", 
+output.short   <- paste0(out.dir, "/", locus_name, "_association_results_short1.RDS")
 
 
 #-----------------------------------------------------#
@@ -146,6 +148,23 @@ merged_data <- genome %>%
     ) %>%
   #slice_head(n = 6000) %>%
   inner_join(prc_comp, by = "AID")
+
+#----------#
+# save the merged data
+write.csv(merged_data, file = output.data, quote = F, row.names = F)
+
+
+message.data <- paste0(
+  "Store ", 
+  locus_name, 
+  " haplotypes data including dosage levels of ",
+  ncol(merged_data %>% select(starts_with("chr"))),
+  " variants and ",
+  length(intersect(phenome, colnames(merged_data))),
+  " traits on",
+  output.data)
+
+cat("\n", message.data, "!\n")
 
 
 #-----------------------------------------------------#
