@@ -30,9 +30,17 @@ micromamba env list
 # Analysis steps
 - Step 1: defining the window for each locus respect to the recombination rate
 - Step 2: extracting the variants within the window (or recombination spikes)
-- Step 3: taking the dosage level of the extracted variants for each locus
-- Step 4: 
-- Step 5: 
+- Step 3: taking dosage level of the extracted variants for each locus
+- Step 4: taking annotations of the extracted variants using bcftools' vep plugin
+- Step 5: taking alleles and their frequency from vcf file
+- Step 6: depicting alelle frequencies of the variants
+- Step 7: depicting consequences of the variants
+- Step 8: depicting frequency of the variants across the genes at the locus
+- Step 9: merging the dosage levels and phenotypes
+- Step 10: building the haplotypes at each locus and test their association with the health traits
+- Step 11: depicting the reconstructed haplotypes
+- Step 12: visulaizing association results via heatmap plot
+- Step 13: reporting the results for each locus using Rmarkdown
 
 ```bash
 rule targets:
@@ -110,6 +118,18 @@ snakemake -R --until plot_associations -n
 - Trying to run the jobs on clusters using below (Mon, 18:40, 18-dec-23):
 ```bash
 snakemake --latency-wait 60 --use-conda --cluster-config cluster.yaml --cluster "sbatch -p {cluster.partition}  --mem-per-cpu={cluster.mem} -c {cluster.cores}" --jobs 20
+```
+
+- Finally ran teh pipeline on clustered computer using slurm (Thu, 19:30, 21-Dec-23).
+```bash
+# full version
+snakemake   --reason --until get_locus --jobs 3  --default-resource mem_gb=8800  --latency-wait 30  --keep-going  -cluster 'sbatch  --partition fast  --cores 3          --mem-per-cpu=8GB --output  output/{rule}.{wildcards}.out  -error   output/{rule}.{wildcards}.err'
+
+# modified
+snakemake  --reason --until get_locus --jobs 3  --default-resource mem_gb=8GB  --latency-wait 30  --keep-going  -cluster 'sbatch  -p fast -cpu-per-task {threads} --mem-per-cpu=8'
+
+# short version
+snakemake --use-conda --jobs 3  --reason --until get_locus --default-resource mem_gb=8GB  --latency-wait 30  --keep-going  -cluster 'sbatch  -p fast -c 3 --mem-per-cpu=8GB'
 ```
 
 Dariush
