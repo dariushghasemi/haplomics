@@ -11,7 +11,7 @@ WES=/scratch/compgen/data/genetics/CHRIS13K/Imputation/WES/CHRIS13K.WES.imputed.
 imputed=/scratch/compgen/data/genetics/CHRIS13K/Imputation/TOPMed/
 main=/home/dghasemisemeskandeh/projects/haploAnalysis
 window=$main/$1
-output_dir=$main/genotype
+output_dir=$main/data/genotype
 
 # $1 is locus_window.txt
 #------------------------#
@@ -36,7 +36,8 @@ tail -n+2 $window | while IFS=$'\t' read -r chr beg end locus;
     
     # Generate the command to extract the region from the VCF file (and Print the command) #bgzip -c
     bcftools view $WES -r ${window_size} -Oz -o $output_dir/${locus}.vcf.gz
-    
+    sleep 10
+
     # creating index file
     tabix $output_dir/${locus}.vcf.gz
 done

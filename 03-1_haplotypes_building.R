@@ -45,8 +45,8 @@ data.dir <- paste0(base.dir, "/HaploReg/data")
 traits_blood   <- paste0(data.dir, "/chris_q-norm.csv")
 principal_comp <- paste0(data.dir, "/CHRIS13K.GT.evecs")
 output.data    <- paste0(base.dir, "/haploAnalysis/data/", locus_name, "_haplotypes_data.csv")
-output.full    <- paste0(out.dir, "/", locus_name, "_association_results_full1.RDS") #today.date, "_", 
-output.short   <- paste0(out.dir, "/", locus_name, "_association_results_short1.RDS")
+output.full    <- paste0(out.dir, "/", locus_name, "_association_results_full.RDS") #today.date, "_", 
+output         <- paste0(out.dir, "/", locus_name, "_association_results.RDS")
 
 
 #-----------------------------------------------------#
@@ -125,19 +125,35 @@ phenome <- chris %>% select(all_of(phenotypes)) %>% colnames()
 #-------               Merge data            ---------
 #-----------------------------------------------------#
 
+#genome %>%
+  #filter(AF > 0.00001) %>%
+  #select(- MARKER_ID) %>%
+  #mutate(SNPid = str_c("chr", chromosome, ":", position)) %>%
+  #distinct(AID, SNPid, .keep_all = TRUE) %>%
+  #group_by(SNPid) %>%
+  #mutate(uniq_row = row_number()) %>%
+  #pivot_wider(id_cols = AID, names_from = SNPid, values_from = Dosage) %>% head()
+  #select(- uniq_row) %>% 
+  #pivot_wider(names_from = c(chromosome, position), names_glue = "chr{chromosome}:{position}", values_from = Dosage) %>% 
+  #unnest(everything()) %>% head()
+  #mutate(across(starts_with("chr"), ~ unnest)) %>% head (10)
+  #mutate(across(where(is.double), as.character)) %>% head (10)
+
+
 cat("\nMerge data...\n")
 
 # Restructuring vcf file to wide format
 merged_data <- genome %>%
   filter(AF > 0.00001) %>%
   mutate(SNPid = str_c("chr", chromosome, ":", position)) %>%
+  distinct(AID, SNPid, .keep_all = TRUE) %>%
   pivot_wider(id_cols = AID, names_from = SNPid, values_from = Dosage) %>%
   inner_join(by = "AID", chris %>% select(
     AID,
     Sex,
     Age,
     eGFRw,
-    all_of(phenome),
+    all_of(phenome[c(3,4,5)]),
     #-FT3,
     #-FT4
     )
@@ -149,6 +165,7 @@ merged_data <- genome %>%
   #slice_head(n = 6000) %>%
   inner_join(prc_comp, by = "AID")
 
+str(merged_data)
 #----------#
 # save the merged data
 write.csv(merged_data, file = output.data, quote = F, row.names = F)
@@ -287,8 +304,7 @@ cat("\nSaving results...\n")
 results_shrinked <- results %>% select(trait_name, haplotype, tidy)
 
 # saving the results
-saveRDS(results, output.full)
-saveRDS(results_shrinked, output.short)
+saveRDS(results_shrinked, output)
 
 #----------#
 # print time and date

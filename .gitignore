@@ -49,6 +49,6 @@ output/
 
 # Snakemake files
 .snakemake/*
-
+.snakemake/metadata/*
 *.pdf
 

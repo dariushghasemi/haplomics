@@ -24,9 +24,9 @@ locus_name
 
 #------------#
 # directories
-base.dir     <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output"
-results.full <- paste0(base.dir, "/result_associations/", today.date, "_", locus_name, "_association_results_full1.RDS")
-out.plot     <- paste0(base.dir, "/plot_heatmaps/",       today.date, "_", locus_name, "_plot_heatmap_haplotypes_effect.png")
+base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output"
+results  <- paste0(base.dir, "/result_associations/", today.date, "_", locus_name, "_association_results_short1.RDS")
+out.plot <- paste0(base.dir, "/plot_heatmaps/",       today.date, "_", locus_name, "_plot_heatmap_haplotypes_effect.png")
 
 #------------#
 # function to install uninstalled required packages
@@ -44,29 +44,6 @@ library("tidyverse")
 library("pheatmap")
 
 #------------#
-# preparing results for drawing heatmap
-res_to_heat <- function(df){
-  
-  df %>%
-    select(- haplotype) %>%
-    unnest(tidy) %>%
-    ungroup() %>%
-    mutate(associated = ifelse(p.value <= 0.05, "Yes", "No"),
-           term = str_replace(term,
-                              "(?<=\\.)\\d{1,2}(?!\\d)",
-                              sprintf("%03d", as.numeric(str_extract(term, "(?<=\\.)\\d{1,2}(?!\\d)")))),
-           term = str_replace(term, "haplo_genotype.", "H")) %>%
-    filter(!str_detect(term, "(Intercept)|PC|Sex|Age|rare")) %>%
-    # reshaping results for pheatmap
-  select(trait_name, term, estimate) %>%
-  left_join(haplo_dict, by = c("trait_name" = "trait_name", "term" = "Haplotype")) %>%
-  select(- term) %>%
-  pivot_wider(names_from = trait_name, values_from = estimate)
-}
-
-#----------#
-
-
 # Function to generate a unique name for each unique combination of variants
 change_haplo_name <- function(df) {
   if (all(df$Haplotype == "Ref.")) {
@@ -76,13 +53,14 @@ change_haplo_name <- function(df) {
   uniq_haplo <- unique(df[, -c(1, 2)])
   # Remove column names to ensure proper comparison
   names(uniq_haplo) <- NULL
-  hash <- apply(uniq_haplo, 1, function(x) paste(x, collapse = "_"))
-  haplo_names <- setNames(paste0("H", seq_along(hash)), hash)
+  #hash <- apply(uniq_haplo, 1, function(x) paste(x, collapse = "_"))
+  haplo_names <- setNames(paste0("H", seq_along(uniq_haplo)), uniq_haplo)
   return(haplo_names)
   }
 }
 
-
+#----------#
+# saving haplotype name
 haplo_dict <- readRDS(rds_file) %>%
   ungroup() %>% 
   select(trait_name, haplotype) %>% 
@@ -97,14 +75,46 @@ haplo_dict <- readRDS(rds_file) %>%
   ungroup() %>%
   select(trait_name, Haplotype, haplo_name)
 
+#readRDS(rds_file) %>% print(n = Inf)#res_to_heat()
+
+#table(haplo_dict$trait_name, haplo_dict$Haplotype)
+#quit() 
+#----------#
+# preparing results for drawing heatmap
+res_to_heat <- function(df){
+  
+  df %>%
+    #select(- haplotype) %>%
+    unnest(tidy) %>%
+    ungroup() %>%
+    mutate(
+      #associated = ifelse(p.value <= 0.05, "Yes", "No"),
+      term = str_replace(
+        term, 
+	"(?<=\\.)\\d{1,2}(?!\\d)",
+	sprintf("%03d", as.numeric(str_extract(term, "(?<=\\.)\\d{1,2}(?!\\d)")))
+	),
+      term = str_replace(term, "haplo_genotype.", "H")
+      ) %>%
+    filter(!str_detect(term, "(Intercept)|PC|Sex|Age|rare")) %>%
+    # reshaping results for pheatmap
+    select(trait_name, term, estimate) %>%
+    left_join(haplo_dict, by = c("trait_name" = "trait_name", "term" = "Haplotype")) %>%
+    select(- term) %>%
+    pivot_wider(names_from = trait_name, values_from = estimate)
+}
+
+
 #print(haplo_dict[c("trait_name", "Haplotype", "haplo_name")], n = 20)
 
+
+#----------#
 # Reading and manipulating the association results for illustartion
 # 01: Blood biomarkers, 02: Proteins, 03: Metabolites
 results_heatmap <- readRDS(rds_file) %>% res_to_heat()
 results_heatmap
 
-#------------#
+#----------#
 # pheatmap
 png(out.plot, units = "in", res = 500, width = 12, height = 6)
 
@@ -116,8 +126,8 @@ pheatmap(results_heatmap[-1],
          labels_row = results_heatmap$haplo_name,
          #display_numbers = results_omics_pval[-1],
          number_color = "gold",
-         cluster_cols = F,
-         cluster_rows = F,
+         cluster_cols = T,
+         cluster_rows = T,
          clustering_method = "ward.D2",
          na_col = "white",
          border_color = NA, 
@@ -130,4 +140,4 @@ pheatmap(results_heatmap[-1],
          angle_col = "270")
 
 dev.off()
-
+#----------#
