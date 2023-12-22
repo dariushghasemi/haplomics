@@ -17,8 +17,8 @@ locus_name  <- gsub("_variants.list", "", basename(variants_file))
 locus_name
 
 #----------#
-out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_histogram"
-out.plt <- paste0(out.dir, "/", today.date, "_", locus_name, "_plot_histo.org")
+out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_histogram/"
+out.plt <- paste0(out.dir, locus_name, "_plot_histo.org") #today.date, "_", 
 
 #------------------------#
 library(dplyr)

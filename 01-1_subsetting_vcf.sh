@@ -36,9 +36,12 @@ tail -n+2 $window | while IFS=$'\t' read -r chr beg end locus;
     
     # Generate the command to extract the region from the VCF file (and Print the command) #bgzip -c
     bcftools view $WES -r ${window_size} -Oz -o $output_dir/${locus}.vcf.gz
-    sleep 10
+    sleep 30
 
     # creating index file
     tabix $output_dir/${locus}.vcf.gz
+
+    # Create sentinel file with the correct name
+    touch $output_dir/${locus}.sentinel
 done
 #------------------------#

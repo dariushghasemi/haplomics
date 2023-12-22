@@ -22,8 +22,8 @@ annot_file <- args[1]
 locus_name <- gsub("_annotation.txt", "", basename(annot_file))
 
 # directories
-base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis"
-out.plot <- paste0(base.dir, "/output/plot_genes/", today.date, "_", locus_name, "_plot_genes.png")
+out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_genes/"
+out.plot <- paste0(locus_name, "_plot_genes.png") #today.date, "_", 
 
 #------------------------#
 library(dplyr)

@@ -131,5 +131,28 @@ snakemake  --reason --until get_locus --jobs 3  --default-resource mem_gb=8GB  -
 # short version
 snakemake --use-conda --jobs 3  --reason --until get_locus --default-resource mem_gb=8GB  --latency-wait 30  --keep-going  -cluster 'sbatch  -p fast -c 3 --mem-per-cpu=8GB'
 ```
+```
+#------------------------#
+rule render_report:
+    input:
+        script = "04-1_report_run.sh",
+        reprt  = "04-0_report.Rmd"
+    output:
+        html = "{locus}_report.nb.html"
+    params:
+        locus = "{locus}"
+    shell:
+        """
+		bash {input.script} {params.locus}
+		"""
+```
+
+- Update the pipeline to have consistant name and wildcards for reporting and performing on cluster (Fri, 19:50, 22-Dec-23).
+
+```bash
+sbatch --wrap 'Rscript 03-1_haplotypes_data.R  data/dosage/IGF1R_dosage.txt' -c 2 --mem-per-cpu=16GB -J "03-1_IGF1R.R"
+sbatch --wrap 'Rscript 03-2_haplotypes_building.R  data/pheno/IGF1R_haplotypes_data.csv' -c 2 --mem-per-cpu=16GB -J "03-2_IGF1R.R"
+sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IGF1R_haplotypes_association.RDS' -c 2 --mem-per-cpu=16GB -J "03-4_IGF1R.R"
+```
 
 Dariush

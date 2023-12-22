@@ -132,7 +132,7 @@ hap_model <- function(df){
     na.action = "na.geno.keep",
     locus.label = colnames(loci),
     x = TRUE,
-    control = haplo.glm.control(haplo.freq.min = .015,
+    control = haplo.glm.control(haplo.freq.min = .01,
                                 em.c = em_ctrl))
   
   return(model_fit)

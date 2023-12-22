@@ -32,8 +32,8 @@ locus_name
 #----------#
 # directories
 out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_haplotypes/"
-out.plot1 <- paste0(out.dir, today.date, "_", locus_name, "_plot_haplotypes.png")
-out.plot2 <- paste0(out.dir, today.date, "_", locus_name, "_plot_haplotypes_shrinked.png")
+out.plot1 <- paste0(out.dir, locus_name, "_plot_haplotypes.png") #today.date, "_", 
+out.plot2 <- paste0(out.dir, locus_name, "_plot_haplotypes_shrinked.png") #today.date, "_", 
 
 
 #-----------------------------------------------------#

@@ -31,18 +31,20 @@ my_date = today.strftime('%d-%b-%y')
 rule all:
 	input:
 		expand("data/genotype/{locus}.vcf.gz", locus = loci),
+		expand("data/genotype/{locus}.sentinel", locus = loci),
 		expand("data/dosage/{locus}_dosage.txt", locus = loci),
 		expand("data/annotation/{locus}_variants.list", locus = loci),
 		expand("data/annotation/{locus}_annotation.txt", locus = loci),
-		expand("output/plot_histogram/{day}_{locus}_plot_histo.png", locus = loci, day = my_date),
-		expand("output/plot_annotations/{day}_{locus}_plot_annotations.png", locus = loci, day = my_date),
-		expand("output/plot_genes/{day}_{locus}_plot_genes.png", locus = loci, day = my_date),
-		expand("data/{locus}_haplotypes_data.csv", locus = loci, day = my_date),
+		expand("output/plot_histogram/{locus}_plot_histo.png", locus = loci, day = my_date),
+		expand("output/plot_annotations/{locus}_plot_annotations.png", locus = loci, day = my_date),
+		expand("output/plot_genes/{locus}_plot_genes.png", locus = loci, day = my_date),
+		expand("data/pheno/{locus}_haplotypes_data.csv", locus = loci, day = my_date),
+		expand("data/pheno/{locus}_haplotypes_data.RDS", locus = loci, day = my_date),
 		expand("output/result_associations/{locus}_association_results.RDS", day = my_date, locus = loci),
-		expand("output/plot_haplotypes/{day}_{locus}_plot_haplotypes.png", locus = loci, day = my_date),
-		expand("output/plot_haplotypes/{day}_{locus}_plot_haplotypes_shrinked.png", locus = loci, day = my_date),
-		expand("output/plot_heatmaps/{day}_{locus}_plot_heatmap_haplotypes_effect.png", locus = loci, day = my_date),
-		expand("output/report_html/{day}_{locus}_report.nb.html", locus = loci, day = my_date)
+		expand("output/plot_haplotypes/{locus}_plot_haplotypes.png", locus = loci, day = my_date),
+		expand("output/plot_haplotypes/{locus}_plot_haplotypes_shrinked.png", locus = loci, day = my_date),
+		expand("output/plot_heatmaps/{locus}_plot_heatmap_haplotypes_effect.png", locus = loci, day = my_date),
+		#expand("output/report_html/{locus}_report.nb.html", locus = loci, day = my_date)
 
 
 #------------------------#
@@ -52,28 +54,26 @@ rule get_locus:
 		position = "data/locus_window.txt"
 	output:
 		vcf = "data/genotype/{locus}.vcf.gz",
-		sentinel = "data/annotation/{locus}.sentinel"
+		sentinel = "data/genotype/{locus}.sentinel"
 	params:
 		position = "data/locus_window.txt"
 	shell:
 		"""
-		sleep 10
 		bash {input.script} {input.position}
-		touch {output.sentinel}
 		"""
 #------------------------#
 rule get_dosage:
 	input:
 		script = "01-2_extracting_dosage.sh",
 		vcf = "data/genotype/{locus}.vcf.gz",
-		sentinel = "data/annotation/{locus}.sentinel"
+		sentinel = "data/genotype/{locus}.sentinel"
 	output:
 		dosage = "data/dosage/{locus}_dosage.txt",
 		variants = "data/annotation/{locus}_variants.list",
 		annotation = "data/annotation/{locus}_annotation.txt"
 	params: 
 		vcf = "data/genotype/{locus}.vcf.gz",
-		sentinel = "data/annotation/{locus}.sentinel"
+		sentinel = "data/genotype/{locus}.sentinel"
 	shell:
 		"""
 		bash {input.script} {input.vcf}
@@ -84,7 +84,7 @@ rule plot_histogram:
 		script = "01-3_plot_histogram.R",
 		variants = "data/annotation/{locus}_variants.list"
 	output:
-		plot = "output/plot_histogram/{day}_{locus}_plot_histo.png"
+		plot = "output/plot_histogram/{locus}_plot_histo.png"
 	params:
 		variants = "data/annotation/{locus}_variants.list"
 	shell:
@@ -97,7 +97,7 @@ rule plot_annotation:
 		script = "01-4_plot_annotation.R",
 		annotation = "data/annotation/{locus}_annotation.txt"
 	output:
-		plot = "output/plot_annotations/{day}_{locus}_plot_annotations.png"
+		plot = "output/plot_annotations/{locus}_plot_annotations.png"
 	params:
 		annotation = "data/annotation/{locus}_annotation.txt"
 	shell:
@@ -110,7 +110,7 @@ rule plot_genes:
 		script = "01-5_plot_genes.R",
 		annotation = "data/annotation/{locus}_annotation.txt"
 	output:
-		plot = "output/plot_genes/{day}_{locus}_plot_genes.png"
+		plot = "output/plot_genes/{locus}_plot_genes.png"
 	params:
 		annotation = "data/annotation/{locus}_annotation.txt"
 	shell:
@@ -118,13 +118,13 @@ rule plot_genes:
 		Rscript {input.script} {input.annotation}
 		"""
 #------------------------#
-rule build_haplotypes:
+rule merge_data:
 	input:
-		script = "03-1_haplotypes_building.R",
+		script = "03-1_haplotypes_data.R",
 		dosage = "data/dosage/{locus}_dosage.txt"
 	output:
-		haplo_data   = "data/{locus}_haplotypes_data.csv",
-		result       = "output/result_associations/{locus}_association_results.RDS"
+		haplo_data_csv = "data/pheno/{locus}_haplotypes_data.csv",
+		haplo_data_rds = "data/pheno/{locus}_haplotypes_data.RDS"
 	params:
 		dosage = "data/dosage/{locus}_dosage.txt"
 	shell:
@@ -132,17 +132,30 @@ rule build_haplotypes:
 		Rscript {input.script} {input.dosage}
 		"""
 #------------------------#
+rule build_haplotypes:
+	input:
+		script = "03-2_haplotypes_building.R",
+		haplo_data = "data/pheno/{locus}_haplotypes_data.csv"
+	output:
+		result = "output/result_associations/{locus}_association_results.RDS"
+	params:
+		dosage = "data/dosage/{locus}_dosage.txt"
+	shell:
+		"""
+		Rscript {input.script} {input.haplo_data}
+		"""
+#------------------------#
 rule plot_haplotypes:
 	input:
-		script = "03-2_haplotypes_plot.R",
-		result = "output/result_associations/{day}_{locus}_association_results.RDS",
+		script = "03-3_haplotypes_plot.R",
+		result = "output/result_associations/{locus}_association_results.RDS",
 		annotation = "data/annotation/{locus}_annotation.txt",
 		variants = "data/annotation/{locus}_variants.list"
 	output:
-		plot1 = "output/plot_haplotypes/{day}_{locus}_plot_haplotypes.png",
-		plot2 = "output/plot_haplotypes/{day}_{locus}_plot_haplotypes_shrinked.png"
+		plot1 = "output/plot_haplotypes/{locus}_plot_haplotypes.png",
+		plot2 = "output/plot_haplotypes/{locus}_plot_haplotypes_shrinked.png"
 	params:
-		result = "output/result_associations/{day}_{locus}_association_results.RDS",
+		result = "output/result_associations/{locus}_association_results.RDS",
 		annotation = "data/annotation/{locus}_annotation.txt",
 		variants = "data/annotation/{locus}_variants.list"
 	shell:
@@ -152,32 +165,18 @@ rule plot_haplotypes:
 #------------------------#
 rule plot_associations:
 	input:
-		script = "03-3_haplotypes_heatmap.R",
-		result = "output/result_associations/{day}_{locus}_association_results.RDS"
+		script = "03-4_haplotypes_heatmap.R",
+		result = "output/result_associations/{locus}_association_results.RDS"
 	output:
-		plot = "output/plot_heatmaps/{day}_{locus}_plot_heatmap_haplotypes_effect.png"
+		plot = "output/plot_heatmaps/{locus}_plot_heatmap_haplotypes_effect.png"
 	params:
-		result = "output/result_associations/{day}_{locus}_association_results.RDS"
+		result = "output/result_associations/{locus}_association_results.RDS"
 	shell:
 		"""
 		Rscript {input.script} {input.result}
 		"""
-#------------------------#
-rule render_report:
-    input:
-        script = "04-1_report_run.sh",
-        reprt  = "04-0_report.Rmd"
-    output:
-        html = "{day}_{locus}_report.nb.html"
-    params:
-        #locus = "{locus}"
-    shell:
-        """
-		bash {input.script} {params.locus}
-		"""
-#------------------------#
 
-ruleorder: get_locus > get_dosage > plot_histogram > plot_annotation > plot_genes > build_haplotypes > plot_haplotypes > plot_associations > render_report
-
+#------------------------#
+ruleorder: get_locus > get_dosage > plot_histogram > plot_annotation > plot_genes > merge_data > build_haplotypes > plot_haplotypes > plot_associations
 #------------------------#
 

@@ -142,7 +142,7 @@ merged_data <- genome %>%
     Sex,
     Age,
     eGFRw,
-    all_of(phenome[c(3,4,5)]),
+    all_of(phenome),
     #-FT3,
     #-FT4
     )
