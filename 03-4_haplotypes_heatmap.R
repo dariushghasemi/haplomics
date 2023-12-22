@@ -19,7 +19,7 @@ args <- commandArgs(trailingOnly = TRUE)
 rds_file <- args[1]
 
 # taking the locus name
-locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_association_results_.+.RDS", "", basename(rds_file))
+locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_haplotypes_association.RDS", "", basename(rds_file))
 locus_name
 
 #------------#
@@ -43,6 +43,10 @@ if (!is.installed("pheatmap")){
 library("tidyverse")
 library("pheatmap")
 
+readRDS(rds_file) %>% unnest(haplotype) %>% 
+  select(- hap.freq) %>% print(n = Inf)
+
+quit()
 #------------#
 # Function to generate a unique name for each unique combination of variants
 change_haplo_name <- function(df) {

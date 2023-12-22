@@ -24,15 +24,16 @@ rds_file <- args[1]
 vep_file <- args[2]
 snp_file <- args[3]
 
-# taking the locus name
-locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_association_results_.+.RDS", "", basename(rds_file))
+# taking locus name
+#locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_association_results_.+.RDS", "", basename(rds_file))
+locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_haplotypes_association.RDS", "", basename(rds_file))
 locus_name
 
 #----------#
 # directories
-base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis"
-out.plot1 <- paste0(base.dir, "/output/", today.date, "_", locus_name, "_plot_haplotypes.png")
-out.plot2 <- paste0(base.dir, "/output/", today.date, "_", locus_name, "_plot_haplotypes_shrinked.png")
+out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_haplotypes/"
+out.plot1 <- paste0(out.dir, today.date, "_", locus_name, "_plot_haplotypes.png")
+out.plot2 <- paste0(out.dir, today.date, "_", locus_name, "_plot_haplotypes_shrinked.png")
 
 
 #-----------------------------------------------------#
@@ -54,7 +55,7 @@ snps_list <- read.delim(
 
 # association results
 results <- readRDS(rds_file)
-
+results
 
 #-----------------------------------------------------#
 #------           Required functions          --------
@@ -169,6 +170,7 @@ labeling_axises <- function(df) {
 
 #----------#
 fading_alleles <- function(df) {
+
   df %>% mutate(
     # alleles differing from the alleles in "Reference" haplotypes
     differs_ref = majorMinor != majorMinor_ref | is.na(majorMinor_ref),
@@ -269,7 +271,7 @@ hap_plt <- data_hap_plt %>% haplo_plot()
 #----------#
 # save haplotypes plot
 ggsave(hap_plt, filename = out.plot1, width = num_snps / 3 - 0.5, height = num_haplo + 1.5, dpi = 350, units = "in", limitsize = FALSE)
-ggsave(shr_plt, filename = out.plot2, width = num_snps_shr / 2 - 0.5, height = num_haplo + 1.5, dpi = 350, units = "in", limitsize = FALSE)
+ggsave(shr_plt, filename = out.plot2, width = 5.5, height = num_haplo + 1.5, dpi = 350, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
 
 #----------#
 # print time and date
