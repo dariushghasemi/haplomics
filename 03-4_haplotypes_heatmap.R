@@ -35,8 +35,8 @@ is.installed <- function(package_name){
 }
 
 # check if package "Haplo.stats" is installed
-if (!is.installed("pheatmap")){
-   install.packages("pheatmap");
+if (!is.installed("digest")){
+   install.packages("digest");
 }
 
 #------------#
@@ -52,36 +52,53 @@ change_haplo_name <- function(df) {
   } else {
   # Exclude trait_name and Haplotype columns
   uniq_haplo <- unique(df[- c(1:2)])
-  # Remove column names to ensure proper comparison
-  names(uniq_haplo) <- NULL
-  
+
   hash <- apply(uniq_haplo, 1, function(x) paste(x, collapse = "_"))
-  haplo_names <- setNames(paste0("H", seq_along(hash)), hash)
-  
-  return(haplo_names)
+  # Use a consistent name for each group
+  haplo_name <- setNames(paste0("H", seq_along(hash)), hash)
+
+  return(hash)
   }
 }
 
+# Function to check if haplotype is identical across traits
+is_identical_haplotype <- function(df, haplotype) {
+  identical_rows <- df %>%
+    filter(Haplotype == haplotype) %>%
+    select(-trait_name, -Haplotype) %>%
+    summarise_all(~all(. == first(.))) %>%
+    unlist()
+  
+  return(all(identical_rows))
+}
+#----------#
+problematic <- c("ALT_GPT", "AST_GOT", "DBP", "SBP", "Pulse_Rate", "FT4", "ALP")
 #----------#
 # saving haplotype name
-haplo_dict <- readRDS(rds_file) %>%
+haplo_dict <- readRDS(rds_file) %>% 
   ungroup() %>% 
   select(trait_name, haplotype) %>% 
   unnest(haplotype) %>% 
-  select(- hap.freq) %>%
-  filter(Haplotype != "Hrare") %>%
-  group_by(trait_name) %>%
-  mutate(
-    haplo_name = change_haplo_name(.),
-    haplo_name = if_else(Haplotype == "Ref.", "Ref.", haplo_name)
-  ) %>%
-  ungroup() %>%
-  select(trait_name, Haplotype, haplo_name)
+  select(- hap.freq) %>% 
+  filter(Haplotype != "Hrare") #%>% #slice_head(n=120) %>%
+  #filter(!trait_name %in% problematic) %>%
+ 
+variants <- grep("^chr", names(df), value = TRUE)
+variants
 
-#readRDS(rds_file) %>% print(n = Inf)#res_to_heat()
+haplo_dict %>% 
+  group_by(trait_name) %>% #count(trait_name) %>% print(n = Inf)
+  #change_haplo_name(.)
+  mutate(
+    haplo = do.call(paste, c(select(., all_of(variants)), sep = "_"))
+    #haplo_name = change_haplo_name(.),
+    #haplo_name = if_else(Haplotype == "Ref.", "Ref.", haplo_name)
+  ) %>% 
+  ungroup() %>%
+  select(trait_name, Haplotype, haplo) #%>% print(n = Inf)
 
 #table(haplo_dict$trait_name, haplo_dict$Haplotype)
-#quit() 
+quit()
 #----------#
 # preparing results for drawing heatmap
 res_to_heat <- function(df){
