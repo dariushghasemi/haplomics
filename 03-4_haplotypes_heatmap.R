@@ -57,7 +57,7 @@ change_haplo_name <- function(df) {
   # Use a consistent name for each group
   haplo_name <- setNames(paste0("H", seq_along(hash)), hash)
 
-  return(hash)
+  return(haplo_name)
   }
 }
 
@@ -75,30 +75,37 @@ is_identical_haplotype <- function(df, haplotype) {
 problematic <- c("ALT_GPT", "AST_GOT", "DBP", "SBP", "Pulse_Rate", "FT4", "ALP")
 #----------#
 # saving haplotype name
-haplo_dict <- readRDS(rds_file) %>% 
-  ungroup() %>% 
+haplo_dict0 <- readRDS(rds_file) %>% 
+  ungroup() %>%
   select(trait_name, haplotype) %>% 
   unnest(haplotype) %>% 
   select(- hap.freq) %>% 
-  filter(Haplotype != "Hrare") #%>% #slice_head(n=120) %>%
+  filter(Haplotype != "Hrare") %>% 
+  #select(trait_name, Haplotype, "chr15.98649165", "chr15.98649166", "chr15.98649359", "chr15.98649374")%>%
+  slice_head(n=72) #%>%
   #filter(!trait_name %in% problematic) %>%
- 
-variants <- grep("^chr", names(df), value = TRUE)
+
+variants <- grep("^chr", names(haplo_dict0), value = TRUE)
 variants
 
-haplo_dict %>% 
-  group_by(trait_name) %>% #count(trait_name) %>% print(n = Inf)
+haplo_dict <- haplo_dict0 %>% 
+  #group_by(trait_name) %>% #count(trait_name) %>% print(n = Inf)
   #change_haplo_name(.)
+  mutate(haplo = do.call(paste, c(select(., all_of(variants)), sep = "_"))) %>%
+  add_count(haplo, name = "haplo_count") %>%
+  filter(haplo_count == max(haplo_count)) %>% #select(trait_name, Haplotype, haplo_count, haplo) %>% print(n =Inf) 
+  group_by(trait_name) %>%
   mutate(
-    haplo = do.call(paste, c(select(., all_of(variants)), sep = "_"))
-    #haplo_name = change_haplo_name(.),
-    #haplo_name = if_else(Haplotype == "Ref.", "Ref.", haplo_name)
-  ) %>% 
+    haplo_name = change_haplo_name(.),
+    haplo_name = if_else(Haplotype == "Ref.", "Ref.", haplo_name)
+  ) %>%
   ungroup() %>%
-  select(trait_name, Haplotype, haplo) #%>% print(n = Inf)
+  select(trait_name, Haplotype, haplo_name)
+  
+#haplo_dict %>% print(n = Inf)
 
 #table(haplo_dict$trait_name, haplo_dict$Haplotype)
-quit()
+#quit()
 #----------#
 # preparing results for drawing heatmap
 res_to_heat <- function(df){
@@ -119,7 +126,9 @@ res_to_heat <- function(df){
     filter(!str_detect(term, "(Intercept)|PC|Sex|Age|rare")) %>%
     # reshaping results for pheatmap
     select(trait_name, term, estimate) %>%
-    left_join(haplo_dict, by = c("trait_name" = "trait_name", "term" = "Haplotype")) %>%
+    # edited from left_join to right_join to keep only available haplotypes for all traits
+    right_join(haplo_dict, by = c("trait_name" = "trait_name", "term" = "Haplotype")) %>%
+    filter(term != "Ref.") %>%
     select(- term) %>%
     pivot_wider(names_from = trait_name, values_from = estimate)
 }
