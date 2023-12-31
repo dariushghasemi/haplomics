@@ -155,4 +155,8 @@ sbatch --wrap 'Rscript 03-2_haplotypes_building.R  data/pheno/IGF1R_haplotypes_d
 sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IGF1R_haplotypes_association.RDS' -c 2 --mem-per-cpu=16GB -J "03-4_IGF1R.R"
 ```
 
+- Equalizing number of haplotypes for each trait by means of regulating EM algorithm control parameters (Sun, 23:30, 31-Dec-23).
+
+- Happy New Year 2024!!!
+
 Dariush
