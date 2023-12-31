@@ -25,8 +25,7 @@ locus_name
 #------------#
 # directories
 base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output"
-results  <- paste0(base.dir, "/result_associations/", locus_name, "_haplotypes_association.RDS") #today.date, "_", 
-out.plot <- paste0(base.dir, "/plot_heatmaps/",       locus_name, "_plot_heatmap_haplotypes_effect.png") #today.date, "_", 
+out.plot <- paste0(base.dir, "/plot_heatmaps/", locus_name, "_plot_heatmap_haplotypes_effect.png") #today.date, "_", 
 
 #------------#
 # function to install uninstalled required packages
@@ -75,15 +74,19 @@ is_identical_haplotype <- function(df, haplotype) {
 problematic <- c("ALT_GPT", "AST_GOT", "DBP", "SBP", "Pulse_Rate", "FT4", "ALP")
 #----------#
 # saving haplotype name
-haplo_dict0 <- readRDS(rds_file) %>% 
+#haplo_dict0 <- 
+readRDS(rds_file) %>% 
   ungroup() %>%
   select(trait_name, haplotype) %>% 
   unnest(haplotype) %>% 
   select(- hap.freq) %>% 
   filter(Haplotype != "Hrare") %>% 
   #select(trait_name, Haplotype, "chr15.98649165", "chr15.98649166", "chr15.98649359", "chr15.98649374")%>%
-  slice_head(n=72) #%>%
+  #slice_head(n=72) %>% 
+  count(trait_name) %>% print(n=Inf)
   #filter(!trait_name %in% problematic) %>%
+
+quit()
 
 variants <- grep("^chr", names(haplo_dict0), value = TRUE)
 variants
@@ -167,4 +170,6 @@ pheatmap(results_heatmap[-1],
          angle_col = "270")
 
 dev.off()
+
 #----------#
+#sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R output/result_associations/IGF1R_haplotypes_association.RDS ' -c 2 --mem-per-cpu=32GB -J "03-2_IGF1R.R"

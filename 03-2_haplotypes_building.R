@@ -88,8 +88,9 @@ genome_binary  <- geno1to2(round(loci, 0), locus.label = colnames(loci))
 haplo_genotype <- setupGeno(genome_binary, miss.val = c(0, NA), locus.label = colnames(loci))
 
 # S4: GLM data (merging phenotype and genotype data)
-haplo_dataset  <- data.frame(haplo_genotype,
-                             merged_data %>% select(-AID, -starts_with("chr")))
+haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-AID, -starts_with("chr")))
+
+#merged_data %>% select(TSH, eGFRw, HDL, APTT, BMI, Age, Sex, PC1:PC10))
 
 #----------#
 dim(haplo_dataset)
@@ -116,13 +117,13 @@ hap_model <- function(df){
   # Set a common random number seed for both models
   common_iseed <- 777
   
-  # Set haplo.em.control parameters
+  # Set parameters to control EM algorithm
   em_ctrl <- haplo.em.control(
     n.try = 2,
     iseed = common_iseed,
-    insert.batch.size = 2,
+    insert.batch.size = 2, # keep it =2 to equalize n.of haplo for all traits
     max.haps.limit = 4e6,
-    min.posterior = 1e-5)
+    min.posterior = 1e-3)
   
   # fiting the model
   model_fit <- haplo.glm(
@@ -194,4 +195,4 @@ saveRDS(results_shrinked, output.rds)
 # print time and date
 Sys.time()
 
-#sbatch --wrap 'Rscript 03-1_haplotypes_building.R genotype/PDILT_dosage.txt' -c 2 --mem-per-cpu=16GB -J "03-1_PDILT.R"
+#sbatch --wrap 'Rscript 03-2_haplotypes_building.R data/pheno/IGF1R_haplotypes_data.csv' -c 2 --mem-per-cpu=32GB -J "03-2_IGF1R.R"

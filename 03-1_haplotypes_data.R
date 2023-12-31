@@ -59,7 +59,7 @@ phenotypes <- c(
     "Urate", "AST_GOT", "ALT_GPT", "GGT", "ALP", "TB", "DB", "Lipase", "TC",
     "HDL", "LDL", "TG", "Sodium", "Potassium", "Chlorine", #"Calcium_mg",
     "Calcium", "Phosphorus", "Magnesium", "Iron", "Ferritin", 
-    "Transferrin", "TIBC" , "TS", "Homocyst", "CRP", "TSH", "FT3", "FT4", 
+    "Transferrin", "TIBC" , "TS", "Homocyst", "CRP", "TSH", #"FT3", "FT4", 
     "Cortisol", "WBC","RBC","HGB","HCT", "MCV","MCH","MCHC","RDW","PLT","MPV",
     "Neutrophils","Lymphocytes","Monocytes","Eosinophils","Basophils",
     "AntiTPO","Urine_pH","UGlucose","UProteins","UHGB",
@@ -114,21 +114,6 @@ phenome <- chris %>% select(all_of(phenotypes)) %>% colnames()
 #-------               Merge data            ---------
 #-----------------------------------------------------#
 
-#genome %>%
-  #filter(AF > 0.00001) %>%
-  #select(- MARKER_ID) %>%
-  #mutate(SNPid = str_c("chr", chromosome, ":", position)) %>%
-  #distinct(AID, SNPid, .keep_all = TRUE) %>%
-  #group_by(SNPid) %>%
-  #mutate(uniq_row = row_number()) %>%
-  #pivot_wider(id_cols = AID, names_from = SNPid, values_from = Dosage) %>% head()
-  #select(- uniq_row) %>% 
-  #pivot_wider(names_from = c(chromosome, position), names_glue = "chr{chromosome}:{position}", values_from = Dosage) %>% 
-  #unnest(everything()) %>% head()
-  #mutate(across(starts_with("chr"), ~ unnest)) %>% head (10)
-  #mutate(across(where(is.double), as.character)) %>% head (10)
-
-
 cat("\nMerge data...\n")
 
 # Restructuring vcf file to wide format
@@ -160,21 +145,22 @@ str(merged_data)
 write.csv(merged_data, file = output.csv, quote = F, row.names = F)
 saveRDS(merged_data, file = output.rds)
 
-#----------#
-message.data <- paste0(
-  "Store ", 
+#-----------------------------------------------#
+# Printing number of SNPs and traits
+message.data <- paste(
+  "Store", 
   locus_name, 
-  " haplotypes data including dosage levels of ",
+  "haplotypes data including dosage levels of",
   ncol(merged_data %>% select(starts_with("chr"))),
-  " variants and ",
+  "variants and",
   length(intersect(phenome, colnames(merged_data))),
-  " traits on",
+  "traits on: \n",
   output.rds)
 
-cat("\n", message.data, "!\n")
+cat("\n", message.data, "\n")
 
 #----------#
 # print time and date
 Sys.time()
 
-#sbatch --wrap 'Rscript 03-1_haplotypes_building.R genotype/PDILT_dosage.txt' -c 2 --mem-per-cpu=16GB -J "03-1_PDILT.R"
+#sbatch --wrap 'Rscript 03-1_haplotypes_data.R data/dosage/PDILT_dosage.txt' -c 2 --mem-per-cpu=16GB -J "03-1_PDILT.R"
