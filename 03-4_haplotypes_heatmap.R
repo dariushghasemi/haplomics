@@ -71,10 +71,12 @@ is_identical_haplotype <- function(df, haplotype) {
   return(all(identical_rows))
 }
 #----------#
-problematic <- "APTT" #c("ALT_GPT", "AST_GOT", "DBP", "SBP", "Pulse_Rate", "FT4", "ALP")
+problematic <- c("ALT_GPT","AST_GOT","DBP","SBP","Pulse_Rate","FT4","ALP","FE_Alb","Iron", "TS", "APTT")
+
 #----------#
 # saving haplotype name
-haplo_dict0 <- readRDS(rds_file) %>% 
+#haplo_dict0 <- 
+readRDS(rds_file) %>% 
   ungroup() %>%
   select(trait_name, haplotype) %>% 
   unnest(haplotype) %>% 
@@ -82,13 +84,13 @@ haplo_dict0 <- readRDS(rds_file) %>%
   filter(Haplotype != "Hrare") %>% 
   #select(trait_name, Haplotype, "chr15.98649165", "chr15.98649166", "chr15.98649359", "chr15.98649374")%>%
   #slice_head(n=72) %>% 
-  #count(trait_name) %>% print(n=Inf)
-  filter(!trait_name %in% problematic)
+  count(trait_name) %>% print(n=Inf)
+  #filter(!trait_name %in% problematic)
 
-#quit()
+quit()
 
 variants <- grep("^chr", names(haplo_dict0), value = TRUE)
-#variants
+variants
 
 haplo_dict <- haplo_dict0 %>% 
   #group_by(trait_name) %>% #count(trait_name) %>% print(n = Inf)
