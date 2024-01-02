@@ -159,4 +159,8 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 
 - Happy New Year 2024!!!
 
+- By setting parameters controling EM algorithm, we ended up with equivalent number of IGF1R locus haplotypes associated with each traits (Mon, 23:55, 01-Jan-23):
+`haplo.freq.min = .01; haplo.em.control(n.try = 2, insert.batch.size = 2, max.haps.limit = 4e6, min.posterior = 1e-6)`
+
+
 Dariush

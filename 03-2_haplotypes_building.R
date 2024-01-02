@@ -88,10 +88,10 @@ genome_binary  <- geno1to2(round(loci, 0), locus.label = colnames(loci))
 haplo_genotype <- setupGeno(genome_binary, miss.val = c(0, NA), locus.label = colnames(loci))
 
 # S4: GLM data (merging phenotype and genotype data)
-haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(ALT_GPT,FE_Alb,Iron,TS, eGFRw, Age, Sex, PC1:PC10)) #(-AID, -starts_with("chr")))
+haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-AID, -starts_with("chr")))
 
 #merged_data %>% select(TSH, eGFRw, HDL, APTT, BMI, Age, Sex, PC1:PC10))
-
+#(ALT_GPT,FE_Alb,Iron,TS, eGFRw, Age, Sex, PC1:PC10)) #
 #----------#
 dim(haplo_dataset)
 str(haplo_dataset)
@@ -123,7 +123,7 @@ hap_model <- function(df){
     iseed = common_iseed,
     insert.batch.size = 2, # keep it =2 to equalize n.of haplo for all traits
     max.haps.limit = 4e6,
-    min.posterior = 5e-2  # increase the probability of trimming off rare haplotypes at each insertion step
+    min.posterior = 1e-6  # increase the prob of trimming off rare haplo at each insertion step (raise of prob will end up qith fewer haplos)
     )
   
   # fiting the model
@@ -134,8 +134,11 @@ hap_model <- function(df){
     na.action = "na.geno.keep",
     locus.label = colnames(loci),
     x = TRUE,
-    control = haplo.glm.control(haplo.freq.min = .01,
-                                em.c = em_ctrl))
+    control = haplo.glm.control(
+      haplo.freq.min = .01, # if drop it to 0.01, then it unequlizes no. haplotypes
+      em.c = em_ctrl
+      )
+    )
   
   return(model_fit)
 }

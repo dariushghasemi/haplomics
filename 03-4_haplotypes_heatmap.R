@@ -25,7 +25,7 @@ locus_name
 #------------#
 # directories
 base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output"
-out.plot <- paste0(base.dir, "/plot_heatmaps/", locus_name, "_plot_heatmap_haplotypes_effect.png") #today.date, "_", 
+out.plot <- paste0(base.dir, "/plot_heatmaps/", locus_name, "_plot_heatmap_haplotypes_effect_on_traits.png") #today.date, "_", 
 
 #------------#
 # function to install uninstalled required packages
@@ -87,7 +87,6 @@ readRDS(rds_file) %>%
   count(trait_name) %>% print(n=Inf)
   #filter(!trait_name %in% problematic)
 
-quit()
 
 variants <- grep("^chr", names(haplo_dict0), value = TRUE)
 variants
