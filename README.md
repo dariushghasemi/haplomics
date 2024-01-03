@@ -164,4 +164,6 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 
 - Tuning parameters of EM algorithm did not garranty to have equal no. of haplotypes. So, phenotypes must be imputed before building haplotypes (Tue, 23:55, 02-Jan-23)! 
 
+- Haplotypes plot got fixed! When storing the output of `haplo_plot()` function, the width size is now properly set for both full and shrinked plots (Wed, 23:55, 03-Jan-24).
+
 Dariush
