@@ -34,8 +34,8 @@ out.dir  <- paste0(base.dir, "/haploAnalysis/data/pheno/")
 data.dir <- paste0(base.dir, "/HaploReg/data")
 traits_blood   <- paste0(data.dir, "/chris_q-norm.csv")
 principal_comp <- paste0(data.dir, "/CHRIS13K.GT.evecs")
-output.csv <- paste0(out.dir, locus_name, "_haplotypes_data.csv")
-output.rds <- paste0(out.dir, locus_name, "_haplotypes_data.RDS")
+output.csv <- paste0(out.dir, locus_name, "_haplotypes_data_imp.csv")
+output.rds <- paste0(out.dir, locus_name, "_haplotypes_data_imp.RDS")
 
 
 #-----------------------------------------------------#
@@ -123,18 +123,14 @@ merged_data <- genome %>%
   distinct(AID, SNPid, .keep_all = TRUE) %>%
   pivot_wider(id_cols = AID, names_from = SNPid, values_from = Dosage) %>%
   inner_join(by = "AID", chris %>% select(
-    AID,
-    Sex,
-    Age,
-    eGFRw,
-    all_of(phenome),
-    #-FT3,
-    #-FT4
+    AID, Sex, Age, eGFRw,
+    all_of(phenome)
     )
     ) %>%
   mutate(
     across(c("Age", any_of(phenome)), as.numeric),
-    across(c("Sex"), as.factor)
+    across(c("Sex"), as.factor),
+    across(c(eGFRw, any_of(phenome)), median_imput)
     ) %>%
   #slice_head(n = 6000) %>%
   inner_join(prc_comp, by = "AID")

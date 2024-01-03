@@ -44,7 +44,7 @@ base.dir   <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/result_as
 data.dir   <- paste0(base.dir, "/data/pheno/")
 out.dir    <- paste0(base.dir, "/output/result_association/")
 #pheno.geno <- paste0(data.dir, locus_name, "_haplotypes_data.RDS")
-output.rds <- paste0(base.dir, locus_name, "_haplotypes_association_min1.RDS")
+output.rds <- paste0(base.dir, locus_name, "_haplotypes_association.RDS")
 
 
 #-----------------------------------------------------#
@@ -88,11 +88,13 @@ genome_binary  <- geno1to2(round(loci, 0), locus.label = colnames(loci))
 haplo_genotype <- setupGeno(genome_binary, miss.val = c(0, NA), locus.label = colnames(loci))
 
 # S4: GLM data (merging phenotype and genotype data)
-haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(APTT,AST_GOT,Cortisol,DBP,SBP,Pulse_Rate,eGFRw, Age, Sex, PC1:PC10)) #(-AID, -starts_with("chr")))
+haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-AID, -starts_with("chr")))
 
 #merged_data %>% select(TSH, eGFRw, HDL, APTT, BMI, Age, Sex, PC1:PC10))
-#(ALT_GPT,FE_Alb,Iron,TS, eGFRw, Age, Sex, PC1:PC10)) #
+#(APTT,AST_GOT,Cortisol,DBP,SBP,Pulse_Rate,eGFRw, Age, Sex, PC1:PC10)) #
+
 #----------#
+
 dim(haplo_dataset)
 str(haplo_dataset)
 
@@ -119,11 +121,11 @@ hap_model <- function(df){
   
   # Set parameters to control EM algorithm
   em_ctrl <- haplo.em.control(
-    n.try = 2,
+    n.try = 2,            # to have equal no. of haplotypes, phenotype must be imputed! 
     iseed = common_iseed,
     insert.batch.size = 2, # keep it =2 to equalize n.of haplo for all traits
     max.haps.limit = 4e6,
-    min.posterior = 1e-1  # increase the prob of trimming off rare haplo at each insertion step (raise of prob will end up qith fewer haplos)
+    min.posterior = 1e-5  # increase the prob of trimming off rare haplo at each insertion step (raise of prob will end up qith fewer haplos)
     )
   
   # fiting the model
