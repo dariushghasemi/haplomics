@@ -32,8 +32,8 @@ locus_name
 #----------#
 # directories
 out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_haplotypes/"
-out.plot1 <- paste0(out.dir, locus_name, "_plot_haplotypes.png") #today.date, "_", 
-out.plot2 <- paste0(out.dir, locus_name, "_plot_haplotypes_shrinked.png") #today.date, "_", 
+out.plot1 <- paste0(out.dir, locus_name, "_plot_haplotypes2.png") #today.date, "_", 
+out.plot2 <- paste0(out.dir, locus_name, "_plot_haplotypes_shrinked2.png") #today.date, "_", 
 
 
 #-----------------------------------------------------#
@@ -61,6 +61,50 @@ results
 #------           Required functions          --------
 #-----------------------------------------------------#
 
+
+# making dictionary to harmonize haplotype name across omics
+# Function to generate a unique name for each unique combination of variants
+change_haplo_name <- function(df) {
+  if (all(df$Haplotype == "Ref.")) {
+    # Keep "Ref." if the haplotype is identical across traits
+    return("Ref.")
+  } else {
+  # Exclude trait_name and Haplotype columns
+  uniq_haplo <- unique(df[- c(1:2)]) # df %>% select(starts_with("chr"))
+
+  hash <- apply(uniq_haplo, 1, function(x) paste(x, collapse = "_"))
+  # Use a consistent name for each group
+  haplo_name <- setNames(paste0("H", seq_along(hash)), hash)
+
+  return(haplo_name)
+  }
+}
+
+#----------#
+# Extract haplotypes from results and harmonizing their names
+extract_haplotypes <- function(df) {
+  df %>%
+  ungroup() %>%
+  select(trait_name, haplotype) %>% 
+  unnest(haplotype) %>%
+  select(- hap.freq) %>%
+  filter(Haplotype != "Hrare") %>%
+  group_by(trait_name) %>%
+  mutate(
+    haplo_name  = change_haplo_name(.),
+    haplo_name  = if_else(Haplotype == "Ref.", "Ref.", haplo_name)
+  ) %>%
+  ungroup() %>%
+  relocate(trait_name, Haplotype, haplo_name) %>%
+  select(- Haplotype) %>%
+  rename(Haplotype = haplo_name)
+}
+#----------#
+
+# harmonizing haplotype names
+#mutate(Haplo2 = Haplotype, Haplotype = haplo_factor(Haplo2)) %>%
+
+#----------#
 # shaping the results for haplotypes plot
 prepare_annotation <- function(df) {
   df %>%
@@ -79,20 +123,15 @@ prepare_annotation <- function(df) {
 adding_annotation <- function(df) {  
   
   df %>%
-  as_tibble() %>%
-  select(- tidy) %>%
-  unnest(haplotype) %>%
-  ungroup() %>% #distinct(Haplotype)
-  filter(Haplotype != "Hrare") %>%
-  pivot_longer(cols = - c(trait_name, Haplotype, hap.freq),
+  pivot_longer(cols = - c(trait_name, Haplotype),
                names_to = "SNP",
                values_to = "majorMinor") %>% #labeled_Allele
   mutate(snpid = str_replace(SNP, "chr", ""),
          snpid = str_replace(snpid, "\\.", ":")) %>% #"chr\\d{1,2}."
   # add alelles frequencies
-  inner_join(annotation %>% prepare_annotation(), by = "snpid")  %>%
+  inner_join(annotation %>% prepare_annotation(), by = "snpid", relationship = "many-to-many")  %>%
   # add variants annotations
-  inner_join(snps_list %>% mutate(snpid = str_c(CHROM, ":", POS)), join_by(CHROM, POS, POS37, snpid)) %>%
+  inner_join(snps_list %>% mutate(snpid = str_c(CHROM, ":", POS)), join_by(CHROM, POS, POS37, snpid), relationship = "many-to-many") %>%
   mutate(snp_ref_alt  = str_c(snpid, "_", REF, "/", ALT)) %>%
   select(- c(CHROM, POS, POS37))
 }
@@ -155,7 +194,7 @@ adding_reference <- function(df) {
   filter(Haplotype == "Ref.") %>% 
   select(Haplotype, snpid, majorMinor) 
 
-  df %>% left_join(df_ref, by = "snpid", suffix = c("", "_ref"))
+  df %>% left_join(df_ref, by = "snpid", suffix = c("", "_ref"), relationship = "many-to-many")
 }
 
 #----------#
@@ -186,10 +225,10 @@ haplo_plot <- function(df) {
     ggplot(aes(xlab_annot, Haplotype)) +
     #geom_point(aes(color = diallelic), size = 4.5, alpha = .75, show.legend = F) +
     geom_text(aes(label = true_allele), color = "grey20", size = 3, vjust = .45) +
-    geom_hline(yintercept = 11 - .5, lty = 1, linewidth = .7, color = "grey50") +
+    geom_hline(yintercept = num_haplo - .5, lty = 1, linewidth = .7, color = "grey50") +
     scale_color_manual(values = c("deepskyblue1", "green1", "magenta1", "#FF3434", "gold1", "grey50", "navyblue", "orange2")) +
     facet_wrap(~ tlab_snpid, scales = "free_x", nrow = 1) +
-    geom_hline(yintercept = 21 - .5, lty = 1, linewidth = .7, color = "grey50") +
+    #geom_hline(yintercept = 21 - .5, lty = 1, linewidth = .7, color = "grey50") +
     #scale_x_discrete(expand = c(5, 2)) +
     labs(x = "", y = "") +
     theme_classic() +
@@ -205,38 +244,14 @@ haplo_plot <- function(df) {
           plot.margin = margin(l = 5, r = 20, t = 2, b = 2, unit = "mm"))
 }
 
-#----------#
-# making dictionary to harmonize haplotype name across omics
-haplo_factor <- function(x) {
-  
-  factor(x,
-         levels = c("Haplo_030", "Haplo_033", "Haplo_034", "Haplo_065",
-                    "Haplo_069", "Haplo_075", "Haplo_077", "Haplo_078",
-                    "Haplo_092", "Haplo_106", "Haplo_107", "Haplo_120",
-                    "Haplo_124", "Haplo_152", "Haplo_155", "Haplo_174",
-                    "Haplo_181", "Haplo_182", "Haplo_208", "Haplo_257", "Haplo_280",
-                    "Haplo_324", "Haplo_350", "Haplo_385", "Haplo_394",
-                    "Haplo_436", "Haplo_455", "Haplo_505", "Reference"),
-         
-         labels = c("H1", "H1", "H1", "H2",
-                    "H2", "H3", "H3", "H2",
-                    "H3", "H4", "H4", "H5",
-                    "H4", "H6", "H6", "H7",
-                    "H6", "H7", "H7", "H8", "H8",
-                    "H8", "H9", "H9", "H10",
-                    "H10", "H9", "H10", "Ref."
-         ))
-}
-
-# harmonizing haplotype names
-#mutate(Haplo2 = Haplotype, Haplotype = haplo_factor(Haplo2)) %>%
 
 #-----------------------------------------------------#
 #------             Haplotypes plot             ------
 #-----------------------------------------------------#
 
 # data for haplotypes plot
-data_hap_plt <- results %>%
+data_hap_plt <- results %>% 
+  extract_haplotypes() %>% 
   adding_annotation() %>% 
   labeling_alleles() %>%
   dying_alleles() %>%
@@ -248,9 +263,11 @@ data_hap_plt <- results %>%
 # width and height of the plot, also for shrinked plot
 num_haplo <- data_hap_plt %>% distinct(Haplotype) %>% nrow()
 num_snps  <- data_hap_plt %>% distinct(snpid) %>% nrow()
-num_haplo_shr <- data_hap_plt %>% shrinking_haplotype() %>% distinct(Haplotype) %>% nrow()
 num_snps_shr  <- data_hap_plt %>% shrinking_haplotype() %>% distinct(snpid) %>% nrow()
 
+cat("No. haplotypes:", num_haplo,
+    "\nNo. SNPs:", num_snps,
+    "\nNo. varied SNPs:", num_snps_shr, "\n\n")
 #----------#
 # shrinked haplotypes plot
 shr_plt <- data_hap_plt %>% shrinking_haplotype() %>% haplo_plot()
@@ -270,8 +287,8 @@ hap_plt <- data_hap_plt %>% haplo_plot()
 
 #----------#
 # save haplotypes plot
-ggsave(hap_plt, filename = out.plot1, width = num_snps / 3 - 0.5, height = num_haplo + 1.5, dpi = 350, units = "in", limitsize = FALSE)
-ggsave(shr_plt, filename = out.plot2, width = 5.5, height = num_haplo + 1.5, dpi = 350, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
+ggsave(hap_plt, filename = out.plot1, width = num_snps / 5 + 0.5, height = num_haplo / 2 + 1.5, dpi = 350, units = "in", limitsize = FALSE)
+ggsave(shr_plt, filename = out.plot2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 2 - 1.5, dpi = 350, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
 
 #----------#
 # print time and date
@@ -319,3 +336,4 @@ results_plot <- results %>%
 #----------#
 ggsave(hap_plt, filename = out.plot, width = num_snps / 3 - 0.5, height = num_haplo + 1.5, dpi = 350, units = "in", limitsize = FALSE)
 
+#sbatch --wrap 'Rscript 03-3_haplotypes_plot.R output/result_associations/IGF1R_haplotypes_association.RDS data/annotation/IGF1R_annotation.txt data/annotation/IGF1R_variants.list' -c 2 --mem-per-cpu=32GB -J "03-3_IGF1R.R"
