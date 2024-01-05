@@ -26,6 +26,7 @@ locus_name
 # directories
 base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output"
 out.plot <- paste0(base.dir, "/plot_heatmaps/", locus_name, "_plot_heatmap_haplotypes_effect_on_traits.png") #today.date, "_", 
+out.tbl  <- paste0(base.dir, "/significant_result/", locus_name, "_haplotypes_association_with_traits.csv")
 
 #------------#
 # function to install uninstalled required packages
@@ -75,16 +76,14 @@ problematic <- c("ALT_GPT","AST_GOT","DBP","SBP","Pulse_Rate","FT4","ALP","FE_Al
 
 #----------#
 # saving haplotype name
-#haplo_dict0 <- 
-readRDS(rds_file) %>% 
+haplo_dict0 <- readRDS(rds_file) %>% 
   ungroup() %>%
   select(trait_name, haplotype) %>% 
   unnest(haplotype) %>% 
   select(- hap.freq) %>% 
-  filter(Haplotype != "Hrare") %>% 
-  #select(trait_name, Haplotype, "chr15.98649165", "chr15.98649166", "chr15.98649359", "chr15.98649374")%>%
+  filter(Haplotype != "Hrare") #%>% 
   #slice_head(n=72) %>% 
-  count(trait_name) %>% print(n=Inf)
+  #count(trait_name) %>% print(n=Inf)
   #filter(!trait_name %in% problematic)
 
 
@@ -94,31 +93,29 @@ variants
 haplo_dict <- haplo_dict0 %>% 
   #group_by(trait_name) %>% #count(trait_name) %>% print(n = Inf)
   #change_haplo_name(.)
-  mutate(haplo = do.call(paste, c(select(., all_of(variants)), sep = "_"))) %>%
-  add_count(haplo, name = "haplo_count") %>%
-  filter(haplo_count == max(haplo_count)) %>% #select(trait_name, Haplotype, haplo_count, haplo) %>% print(n =Inf) 
+  #mutate(haplo = do.call(paste, c(select(., all_of(variants)), sep = "_"))) %>%
+  #add_count(haplo, name = "haplo_count") %>%
+  #filter(haplo_count == max(haplo_count)) %>% #select(trait_name, Haplotype, haplo_count, haplo) %>% print(n =Inf) 
   group_by(trait_name) %>%
   mutate(
-    haplo_name = change_haplo_name(.),
-    haplo_name = if_else(Haplotype == "Ref.", "Ref.", haplo_name)
+    haplo = change_haplo_name(.),
+    haplo = if_else(Haplotype == "Ref.", "Ref.", haplo)
   ) %>%
   ungroup() %>%
-  select(trait_name, Haplotype, haplo_name)
-  
-#haplo_dict %>% print(n = Inf)
+  select(trait_name, Haplotype, haplo)
 
-#table(haplo_dict$trait_name, haplo_dict$Haplotype)
-#quit()
+haplo_dict
+
 #----------#
-# preparing results for drawing heatmap
-res_to_heat <- function(df){
+# extract results and add harmonized haplo names 
+get_results <- function(df) {
   
   df %>%
-    #select(- haplotype) %>%
+    select(- haplotype) %>%
     unnest(tidy) %>%
     ungroup() %>%
     mutate(
-      #associated = ifelse(p.value <= 0.05, "Yes", "No"),
+      associated = ifelse(p.value <= 0.05, "Yes", "No"),
       term = str_replace(
         term, 
         "(?<=\\.)\\d{1,2}(?!\\d)",
@@ -127,23 +124,43 @@ res_to_heat <- function(df){
       term = str_replace(term, "haplo_genotype.", "H")
       ) %>%
     filter(!str_detect(term, "(Intercept)|PC|Sex|Age|rare")) %>%
-    # reshaping results for pheatmap
-    select(trait_name, term, estimate) %>%
-    # edited from left_join to right_join to keep only available haplotypes for all traits
-    right_join(haplo_dict, by = c("trait_name" = "trait_name", "term" = "Haplotype")) %>%
-    filter(term != "Ref.") %>%
-    select(- term) %>%
-    pivot_wider(names_from = trait_name, values_from = estimate)
+    # Uses right_join to ensure using only available haplotypes for all traits
+    right_join(haplo_dict, by = c("trait_name" = "trait_name", "term" = "Haplotype"))
 }
+
+#----------#
+# preparing results for drawing heatmap
+res_to_heat <- function(df){
+  
+  df %>%
+    # reshaping results for pheatmap
+    select(trait_name, haplo, estimate) %>%
+    filter(haplo != "Ref.") %>%
+    pivot_wider(names_from = trait_name, values_from = estimate) #%>%(- haplo)
+}
+
+#----------#
+# saving nominal significant associations
+results_sig <- readRDS(rds_file) %>%
+  get_results() %>%
+  filter(associated == "Yes")%>%
+  select(trait_name, haplo, estimate, std.error, p.value) %>%
+  arrange(haplo, p.value)
+
+results_sig
+
+# store results
+write.csv(results_sig, file = out.tbl, row.names = FALSE, quote = FALSE)
 
 #----------#
 # Reading and manipulating the association results for illustartion
 # 01: Blood biomarkers, 02: Proteins, 03: Metabolites
-results_heatmap <- readRDS(rds_file) %>% res_to_heat()
+results_heatmap <- readRDS(rds_file) %>% get_results() %>% res_to_heat()
 results_heatmap
 
 check_haplo <- nrow(results_heatmap) > 1
 check_haplo
+
 #----------#
 # pheatmap
 png(out.plot, units = "in", res = 400, width = 12, height = 6)
@@ -153,7 +170,7 @@ pheatmap(results_heatmap[-1],
          #breaks = seq(-rg, rg, length.out = 100), #rg <- max(abs(results_heatmap[-1]))
          #color = myColor, 
          #breaks = myBreaks,
-         labels_row = results_heatmap$haplo_name,
+         labels_row = results_heatmap$haplo,
          #display_numbers = results_omics_pval[-1],
          number_color = "gold",
          cluster_cols = check_haplo,

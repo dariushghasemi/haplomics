@@ -34,7 +34,7 @@ out.dir  <- paste0(base.dir, "/haploAnalysis/data/pheno/")
 data.dir <- paste0(base.dir, "/HaploReg/data")
 traits_blood   <- paste0(data.dir, "/chris_q-norm.csv")
 principal_comp <- paste0(data.dir, "/CHRIS13K.GT.evecs")
-output.csv <- paste0(out.dir, locus_name, "_haplotypes_data_imp.csv")
+output.csv <- paste0(out.dir, locus_name, "_haplotypes_data.csv")
 output.rds <- paste0(out.dir, locus_name, "_haplotypes_data_imp.RDS")
 
 

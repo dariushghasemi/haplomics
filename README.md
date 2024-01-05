@@ -121,16 +121,19 @@ snakemake --latency-wait 60 --use-conda --cluster-config cluster.yaml --cluster 
 ```
 
 - Finally ran teh pipeline on clustered computer using slurm (Thu, 19:30, 21-Dec-23).
+
 ```bash
 # full version
-snakemake   --reason --until get_locus --jobs 3  --default-resource mem_gb=8800  --latency-wait 30  --keep-going  -cluster 'sbatch  --partition fast  --cores 3          --mem-per-cpu=8GB --output  output/{rule}.{wildcards}.out  -error   output/{rule}.{wildcards}.err'
+snakemake   --reason --until get_locus --jobs 3  --default-resource mem_gb=8800  --latency-wait 30  --keep-going  --cluster 'sbatch  --partition fast  --cores 3          --mem-per-cpu=8GB --output  output/{rule}.{wildcards}.out  -error   output/{rule}.{wildcards}.err'
 
 # modified
-snakemake  --reason --until get_locus --jobs 3  --default-resource mem_gb=8GB  --latency-wait 30  --keep-going  -cluster 'sbatch  -p fast -cpu-per-task {threads} --mem-per-cpu=8'
+snakemake  --use-conda  --reason --until get_locus --jobs 3  --default-resource mem_gb=8GB  --latency-wait 30  --keep-going  --cluster 'sbatch  -p fast -cpu-per-task {threads} --mem-per-cpu=8'
 
 # short version
-snakemake --use-conda --jobs 3  --reason --until get_locus --default-resource mem_gb=8GB  --latency-wait 30  --keep-going  -cluster 'sbatch  -p fast -c 3 --mem-per-cpu=8GB'
+snakemake --jobs 3  --reason --until get_dosage --default-resource mem_gb=8192  --latency-wait 10  --keep-going  --cluster 'sbatch  -p fast -c 3 --mem-per-cpu=8GB'
 ```
+
+
 ```
 #------------------------#
 rule render_report:
@@ -165,5 +168,7 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 - Tuning parameters of EM algorithm did not garranty to have equal no. of haplotypes. So, phenotypes must be imputed before building haplotypes (Tue, 23:55, 02-Jan-23)! 
 
 - Haplotypes plot got fixed! When storing the output of `haplo_plot()` function, the width size is now properly set for both full and shrinked plots (Wed, 23:55, 03-Jan-24).
+
+- Compeleted the haplotype plot and heatmap plot for two other tested loci (Fri, 18:20, 05-Jan-24).
 
 Dariush
