@@ -19,14 +19,18 @@ args <- commandArgs(trailingOnly = TRUE)
 rds_file <- args[1]
 
 # taking the locus name
-locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_haplotypes_association.RDS", "", basename(rds_file))
+locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_haplotypes_association_\\w+.RDS", "", basename(rds_file))
 locus_name
+
+# type of dataset
+data_source <- gsub("(\\w+|\\d)_haplotypes_association_with_|.RDS", "", basename(rds_file))
+data_source
 
 #------------#
 # directories
 base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output"
-out.plot <- paste0(base.dir, "/plot_heatmaps/", locus_name, "_plot_heatmap_haplotypes_effect_on_traits.png") #today.date, "_", 
-out.tbl  <- paste0(base.dir, "/significant_result/", locus_name, "_haplotypes_association_with_traits.csv")
+out.plot <- paste0(base.dir, "/plot_heatmaps/", locus_name, "_plot_heatmap_haplotypes_effect_on_", data_source, ".png") #today.date, "_", 
+out.tbl  <- paste0(base.dir, "/significant_result/", locus_name, "_haplotypes_association_with_", data_source, ".csv")
 
 #------------#
 # function to install uninstalled required packages
@@ -144,7 +148,7 @@ res_to_heat <- function(df){
 results_sig <- readRDS(rds_file) %>%
   get_results() %>%
   filter(associated == "Yes")%>%
-  select(trait_name, haplo, estimate, std.error, p.value) %>%
+  select(trait_name, haplo, estimate, std.error, p.value, associated) %>%
   arrange(haplo, p.value)
 
 results_sig

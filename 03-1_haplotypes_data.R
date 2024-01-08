@@ -33,9 +33,15 @@ base.dir <- "/home/dghasemisemeskandeh/projects"
 out.dir  <- paste0(base.dir, "/haploAnalysis/data/pheno/")
 data.dir <- paste0(base.dir, "/HaploReg/data")
 traits_blood   <- paste0(data.dir, "/chris_q-norm.csv")
+traits_metabol <- paste0(data.dir, "/chris_meta.csv")
+traits_protein <- paste0(data.dir, "/chris_prot.csv")
 principal_comp <- paste0(data.dir, "/CHRIS13K.GT.evecs")
-output.csv <- paste0(out.dir, locus_name, "_haplotypes_data.csv")
-output.rds <- paste0(out.dir, locus_name, "_haplotypes_data_imp.RDS")
+out.phen.csv <- paste0(out.dir, locus_name, "_haplotypes_data_phen.csv")
+out.meta.csv <- paste0(out.dir, locus_name, "_haplotypes_data_meta.csv")
+out.prot.csv <- paste0(out.dir, locus_name, "_haplotypes_data_prot.csv")
+out.phen.rds <- paste0(out.dir, locus_name, "_haplotypes_data_phen.RDS")
+out.meta.rds <- paste0(out.dir, locus_name, "_haplotypes_data_meta.RDS")
+out.prot.rds <- paste0(out.dir, locus_name, "_haplotypes_data_prot.RDS")
 
 
 #-----------------------------------------------------#
@@ -54,7 +60,7 @@ median_imput = function(x) ifelse(is.na(x), median(x, na.rm = T), x)
 phenotypes <- c(
     "Height","Weight","BMI","Body_Fat","Visceral_Fat",
     "SBP", "DBP", "Pulse_Rate", "HbA1c",
-    "SAlb", "SCr", "UAlb", "UCr", "UACR",
+    "SAlb", "SCr", "UAlb", "UCr", "UACR", "eGFRw",
     "PTT", "INR_PT", "APTT_ratio", "APTT", "Fibrinogen", "AT", "BGlucose",
     "Urate", "AST_GOT", "ALT_GPT", "GGT", "ALP", "TB", "DB", "Lipase", "TC",
     "HDL", "LDL", "TG", "Sodium", "Potassium", "Chlorine", #"Calcium_mg",
@@ -79,7 +85,23 @@ genome <- read.delim(
   col.names  = c("AID", "chromosome", "position", "MARKER_ID", "REF", "ALT", "AF", "Dosage"),
   colClasses = c(rep("character", 6), rep("numeric", 2)),
   #nrows = 125000
-  )
+)
+
+# CHRIS metabolites; p = 175; n = 7,252
+# defining AID column as character to preserve 
+# the leading zero in participants identifier
+chrisMass <- read.csv(traits_metabol, colClass = c(AID = "character")) %>%
+  # Excluding with missing rate > 10.2%
+  select(- c(pc_aa_c30_2, met_so, pc_ae_c38_1))
+
+# Saving metabolites names for PheWS
+metabolites <- chrisMass %>% select(- AID) %>% colnames()
+
+# CHRIS proteins concentrations; p = 148; n = 4,087 
+chrisProt <- read.csv(traits_protein, colClass = c(AID = "character"))
+
+# Saving proteins names for PheWS
+proteins <- chrisProt %>% select(- AID) %>% colnames()
 
 # Principle components
 prc_comp <- read.delim(principal_comp, sep = "\t", stringsAsFactors = FALSE) %>% rename(AID = X.IND_ID)
@@ -109,37 +131,72 @@ chris <- chris %>%
 # Saving traits names for PheWAS
 phenome <- chris %>% select(all_of(phenotypes)) %>% colnames()
 
+#-----------------------------------------------------#
+#-------              Dictionary             ---------
+#-----------------------------------------------------#
+
 
 #-----------------------------------------------------#
 #-------               Merge data            ---------
 #-----------------------------------------------------#
 
-cat("\nMerge data...\n")
+cat("\nMerge genotypes...\n")
 
-# Restructuring vcf file to wide format
-merged_data <- genome %>%
+# Restructuring vcf file to wide format and merged with PCs
+to_merge_genome <- genome %>%
   filter(AF > 0.00001) %>%
   mutate(SNPid = str_c("chr", chromosome, ":", position)) %>%
   distinct(AID, SNPid, .keep_all = TRUE) %>%
   pivot_wider(id_cols = AID, names_from = SNPid, values_from = Dosage) %>%
-  inner_join(by = "AID", chris %>% select(
-    AID, Sex, Age, eGFRw,
-    all_of(phenome)
-    )
-    ) %>%
+  inner_join(by = "AID", prc_comp) %>%
+  inner_join(by = "AID", chris %>% select(AID, Sex, Age)) %>%
   mutate(
-    across(c("Age", any_of(phenome)), as.numeric),
-    across(c("Sex"), as.factor),
-    across(c(eGFRw, any_of(phenome)), median_imput)
-    ) %>%
-  #slice_head(n = 6000) %>%
-  inner_join(prc_comp, by = "AID")
+    across(Age, as.numeric),
+    across(Sex, as.factor)
+  )
 
-str(merged_data)
+str(to_merge_genome)
+dim(to_merge_genome)
+str(to_merge_genome[c("AID", "Age", "Sex")])
+
+#----------#
+cat("\nMerged clinical traits...\n")
+
+# dataset containing genotypes and clinical traits
+merged_phen <- to_merge_genome %>%
+  inner_join(by = "AID", chris %>% select(AID, all_of(phenome))) %>%
+  mutate(
+    across(any_of(phenome), as.numeric),
+    across(any_of(phenome), median_imput)
+    ) #%>% slice_head(n = 6000) 
+
+str(merged_phen %>% select(- starts_with("chr")))
+
+cat("\nMerged serum metabolites...\n")
+
+# dataset containing genotypes and serum metabolites
+merged_meta <- to_merge_genome %>%
+  inner_join(by = "AID", chrisMass) %>%
+  mutate(across(any_of(metabolites), median_imput))
+
+str(merged_meta %>% select(- starts_with("chr")))
+
+cat("\nMerged plasma proteins...\n")
+
+# dataset containing genotypes and plasma proteins
+merged_prot <- to_merge_genome %>%
+  inner_join(by = "AID", chrisProt) %>%
+  mutate(across(any_of(proteins), median_imput))
+
+str(merged_prot %>% select(- starts_with("chr")))
+
 #----------#
 # save the merged data
-write.csv(merged_data, file = output.csv, quote = F, row.names = F)
-saveRDS(merged_data, file = output.rds)
+write.csv(merged_phen, file = out.phen.csv, quote = F, row.names = F)
+write.csv(merged_meta, file = out.meta.csv, quote = F, row.names = F)
+write.csv(merged_prot, file = out.prot.csv, quote = F, row.names = F)
+
+#saveRDS(merged_data, file = output.rds)
 
 #-----------------------------------------------#
 # Printing number of SNPs and traits
@@ -147,11 +204,21 @@ message.data <- paste(
   "Store", 
   locus_name, 
   "haplotypes data including dosage levels of",
-  ncol(merged_data %>% select(starts_with("chr"))),
+  ncol(to_merge_genome %>% select(starts_with("chr"))),
   "variants and",
-  length(intersect(phenome, colnames(merged_data))),
-  "traits on: \n",
-  output.rds)
+  length(intersect(phenome, colnames(merged_phen))),
+  "clinical traits\nfor ", 
+  nrow(merged_phen),
+  "individuals and",
+  length(intersect(metabolites, colnames(merged_meta))),
+  "serum metabolites for", 
+  nrow(merged_meta),
+  "individuals and",
+  length(intersect(proteins, colnames(merged_prot))),
+  "plasma proteins (n =",
+  nrow(merged_prot),
+  ") individuals on: \n",
+  out.phen.csv)
 
 cat("\n", message.data, "\n")
 

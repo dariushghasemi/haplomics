@@ -34,17 +34,22 @@ args <- commandArgs(trailingOnly = TRUE)
 pheno.geno <- args[1]
 
 # taking the locus name
-locus_name  <- gsub("_haplotypes_data.csv", "", basename(pheno.geno))
+locus_name  <- gsub("_haplotypes_data_\\w+.csv", "", basename(pheno.geno))
 locus_name
 
+# type of dataset
+data_source <- gsub("(\\w+|\\d)_haplotypes_data_|.csv", "", basename(pheno.geno))
+data_source
+ 
 #----------#
 # directories
 
-base.dir   <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/result_associations/"
+base.dir   <- "/home/dghasemisemeskandeh/projects/haploAnalysis"
 data.dir   <- paste0(base.dir, "/data/pheno/")
 out.dir    <- paste0(base.dir, "/output/result_association/")
 #pheno.geno <- paste0(data.dir, locus_name, "_haplotypes_data.RDS")
-output.rds <- paste0(base.dir, locus_name, "_haplotypes_association.RDS")
+output.rds <- paste0(base.dir, locus_name, "_haplotypes_association_with_", data_source, ".RDS")
+output.rds
 
 
 #-----------------------------------------------------#
@@ -65,6 +70,10 @@ cat("\nImport data...\n")
 
 # Phenotype data merged with genotypes
 merged_data <- read.csv(pheno.geno, header = TRUE, stringsAsFactors = FALSE)
+
+# for test run
+#merged_data <- merged_data %>% select(AID, Sex, Age, putrescine, glu, pc_ae_c30_0, PC1:PC10, starts_with("chr"))
+#merged_data <- merged_data %>% select(AID, Sex, Age, APOC1_P02654, C1QB_P02746, F12_P00748, PC1:PC10, starts_with("chr"))
 
 
 #-----------------------------------------------------#
