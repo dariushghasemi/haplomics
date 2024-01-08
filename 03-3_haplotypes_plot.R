@@ -287,8 +287,8 @@ hap_plt <- data_hap_plt %>% haplo_plot()
 
 #----------#
 # save haplotypes plot
-ggsave(hap_plt, filename = out.plot1, width = num_snps     / 5 + 0.5, height = num_haplo / 1 + 1.5, dpi = 350, units = "in", limitsize = FALSE)
-ggsave(shr_plt, filename = out.plot2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 1 - 1.5, dpi = 350, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
+ggsave(hap_plt, filename = out.plot1, width = num_snps     / 5 + 0.5, height = num_haplo / 2 + 1.5, dpi = 350, units = "in", limitsize = FALSE)
+ggsave(shr_plt, filename = out.plot2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 2 - 1.5, dpi = 350, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
 
 #----------#
 # print time and date
