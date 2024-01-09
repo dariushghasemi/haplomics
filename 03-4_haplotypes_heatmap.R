@@ -140,6 +140,7 @@ res_to_heat <- function(df){
     # reshaping results for pheatmap
     select(trait_name, haplo, estimate) %>%
     filter(haplo != "Ref.") %>%
+    mutate(trait_name = str_replace_all(trait_name, "_", ":")) %>%
     pivot_wider(names_from = trait_name, values_from = estimate) #%>%(- haplo)
 }
 
@@ -147,7 +148,7 @@ res_to_heat <- function(df){
 # saving nominal significant associations
 results_sig <- readRDS(rds_file) %>%
   get_results() %>%
-  filter(associated == "Yes")%>%
+  filter(associated == "Yes") %>%
   select(trait_name, haplo, estimate, std.error, p.value, associated) %>%
   arrange(haplo, p.value)
 
@@ -167,7 +168,7 @@ check_haplo
 
 #----------#
 # pheatmap
-png(out.plot, units = "in", res = 400, width = 12, height = 6)
+png(out.plot, units = "in", res = 500, width = 19, height = 6) # for traits use width = 12
 
 pheatmap(results_heatmap[-1],
          #color = hcl.colors(50, "Blue-Red 2"),

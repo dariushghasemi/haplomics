@@ -48,7 +48,7 @@ base.dir   <- "/home/dghasemisemeskandeh/projects/haploAnalysis"
 data.dir   <- paste0(base.dir, "/data/pheno/")
 out.dir    <- paste0(base.dir, "/output/result_association/")
 #pheno.geno <- paste0(data.dir, locus_name, "_haplotypes_data.RDS")
-output.rds <- paste0(base.dir, locus_name, "_haplotypes_association_with_", data_source, ".RDS")
+output.rds <- paste0(out.dir, locus_name, "_haplotypes_association_with_", data_source, ".RDS")
 output.rds
 
 
