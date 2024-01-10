@@ -171,4 +171,13 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 
 - Compeleted the haplotype plot and heatmap plot for two other tested loci (Fri, 18:20, 05-Jan-24).
 
+- There are some samples with duplicated AID (called "POOL") and unique sample_id in the proteomics data which are removed when merging with genotypes (Tue, 14:35, 08-Jan-24).
+
+- Association tests of haplotypes with metabolomics and proteomics is added and the subsequent scripts from 03-1 to 03-4 were modified to incorporate the changes (Tue, 19:25, 08-Jan-24).
+
+- Metabolomics and Proteomics association results (heatmap plots) were incorporated in the rmarkdown report (Tue, 19:00, 09-Jan-24).
+
+- Working to render properly the significant association table.
+
+
 Dariush
