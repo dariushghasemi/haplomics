@@ -38,8 +38,9 @@ rule all:
 		expand("output/plot_histogram/{locus}_plot_histo.png", locus = loci, day = my_date),
 		expand("output/plot_annotations/{locus}_plot_annotations.png", locus = loci, day = my_date),
 		expand("output/plot_genes/{locus}_plot_genes.png", locus = loci, day = my_date),
-		expand("data/pheno/{locus}_haplotypes_data.csv", locus = loci, day = my_date),
-		expand("data/pheno/{locus}_haplotypes_data.RDS", locus = loci, day = my_date),
+		expand("data/pheno/{locus}_haplotypes_data_phen.csv", locus = loci, day = my_date),
+		expand("data/pheno/{locus}_haplotypes_data_meta.csv", locus = loci, day = my_date),
+		expand("data/pheno/{locus}_haplotypes_data_prot.csv", locus = loci, day = my_date),
 		expand("output/result_associations/{locus}_association_results.RDS", day = my_date, locus = loci),
 		expand("output/plot_haplotypes/{locus}_plot_haplotypes.png", locus = loci, day = my_date),
 		expand("output/plot_haplotypes/{locus}_plot_haplotypes_shrinked.png", locus = loci, day = my_date),
@@ -123,8 +124,9 @@ rule merge_data:
 		script = "03-1_haplotypes_data.R",
 		dosage = "data/dosage/{locus}_dosage.txt"
 	output:
-		haplo_data_csv = "data/pheno/{locus}_haplotypes_data.csv",
-		haplo_data_rds = "data/pheno/{locus}_haplotypes_data.RDS"
+		haplo_phen_csv = "data/pheno/{locus}_haplotypes_data_phen.csv",
+		haplo_meta_csv = "data/pheno/{locus}_haplotypes_data_meta.csv",
+		haplo_prot_csv = "data/pheno/{locus}_haplotypes_data_prot.csv",
 	params:
 		dosage = "data/dosage/{locus}_dosage.txt"
 	shell:
