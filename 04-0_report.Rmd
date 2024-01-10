@@ -23,13 +23,20 @@ editor: visual
 ```{r, echo=FALSE}
 # date
 today.date <- format(Sys.Date(), "%d-%b-%y")
-
+#base.dir <- 
 regional   <- paste0("~/projects/gwas/05_regional_association/LZ_plots/09-Mar-23_", params$LOCUS, "-1.png")
-density    <- paste0("output/plot_histogram/", today.date, "_plot_histo_", params$LOCUS, ".png")
-annotation <- paste0("output/plot_annotations/", today.date, params$LOCUS, "_plot_annotations.png")
-genes      <- paste0("output/plot_genes/", today.date, params$LOCUS, "_plot_genes.png")
-haplotypes <- paste0("output/plot_haplotypes/", today.date, params$LOCUS, "_plot_haplotypes_shrinked.png")
-heatmap    <- paste0("output/plot_heatmaps/", today.date, params$LOCUS, "_plot_heatmap_haplotypes_effect.png")
+density    <- paste0("output/plot_histogram/old/26-Oct-23_plot_histo_", params$LOCUS, ".png")
+annotation <- paste0("output/plot_annotations/old/18-Dec-23_", params$LOCUS, "_plot_annotations.png")
+genes      <- paste0("output/plot_genes/old/18-Dec-23_", params$LOCUS, "_plot_genes.png")
+haplotypes <- paste0("output/plot_haplotypes/", params$LOCUS, "_plot_haplotypes.png")
+haplotypes.shrinked <- paste0("output/plot_haplotypes/", params$LOCUS, "_plot_haplotypes_shrinked.png")
+heatmap.phen <- paste0("output/plot_heatmaps/", params$LOCUS, "_plot_heatmap_haplotypes_effect_on_phen.png")
+heatmap.meta <- paste0("output/plot_heatmaps/", params$LOCUS, "_plot_heatmap_haplotypes_effect_on_meta.png")
+heatmap.prot <- paste0("output/plot_heatmaps/", params$LOCUS, "_plot_heatmap_haplotypes_effect_on_prot.png")
+res.sig.phen <- paste0("output/significant_result/", params$LOCUS, "_haplotypes_association_with_phen.csv")
+res.sig.meta <- paste0("output/significant_result/", params$LOCUS, "_haplotypes_association_with_meta.csv")
+res.sig.prot <- paste0("output/significant_result/", params$LOCUS, "_haplotypes_association_with_prot.csv")
+
 ```
 
 ```{r setup, include=FALSE}
@@ -38,12 +45,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include=FALSE}
 # [install the libraries before if not already installed]
-# Loading libraries 
+# Loading libraries
+
 library(knitr)
 library(rmarkdown)
-#install.libraries("patchwork")
-#install.packages("cowplot")
-library(cowplot)
+library(tidyverse)
+
+#library(cowplot)
 #library(ggplot2)
 ```
 
@@ -54,31 +62,85 @@ This is a report of Haplotype reconstrauction analysis for *`r params$LOCUS`* ge
 ## Plot Regional Association
 
 ```{r histogram, echo=FALSE, fig.cap="Density", out.width='70%'}
-knitr::include_graphics(regional)
+
+#knitr::include_graphics(regional)
+
 ```
 
 ## Plot Variants Frequency, Annotation and Allele Frequency
 
 ```{r Variants, echo=FALSE, fig.cap="Number and annotation of exonic variants in each gene", fig.align = "default", fig.subcap=c('a','b', 'c'), out.width='70%'}
+
 #p1 <- ggdraw() + draw_image(genes)
 #p2 <- ggdraw() + draw_image(density)
 #p3 <- ggdraw() + draw_image(annotation)
 #plot_grid(p1, p2, p3, cnol = 2)
 
-knitr::include_graphics(genes)
-knitr::include_graphics(annotation)
-knitr::include_graphics(density)
+#knitr::include_graphics(genes)
+#knitr::include_graphics(annotation)
+#knitr::include_graphics(density)
+
 ```
 
 ## Plot Haplotypes
 
 ```{r haplotypes, figures-side, echo=FALSE, fig.cap="Haplotypes", fig.show="hold", out.width='80%'}
-knitr::include_graphics(haplotypes)
+
+#knitr::include_graphics(haplotypes)
+#knitr::include_graphics(haplotypes.shrinked)
+
 ```
 
 ## Plot Heatmap
 
 ```{r heatmap, echo=FALSE, fig.cap="Heatmap Plot", out.width='90%'}
 
-knitr::include_graphics(heatmap)
+#knitr::include_graphics(heatmap.phen)
+#knitr::include_graphics(heatmap.meta)
+#knitr::include_graphics(heatmap.prot)
+
+```
+
+## Significant Associations with Clinical Traits, Metabolites and Proteins
+
+```{r significant results, echo=FALSE, message=FALSE, warning=TRUE}
+
+library(data.table)
+
+result_phen <- read.delim(file = res.sig.phen, header = TRUE, sep = ",", comment.char = "")
+result_meta <- read.delim(file = res.sig.meta, header = TRUE, sep = ",", comment.char = "")
+result_prot <- read.delim(file = res.sig.prot, header = TRUE, sep = ",", comment.char = "")
+
+#result_sig <- result_sig %>% arrange(p.value, haplo)
+#result_sig
+
+# change columns names
+#names(result_sig) <- names(result_sig) %>% str_remove("X\\.+\\d\\.")
+
+# show the results
+result_phen %>% DT::datatable(caption = "Table 1. Results of haplotypes association with clinical traits")
+result_meta %>% DT::datatable(caption = "Table 2. Results of haplotypes association with serum metabolites")
+result_prot %>% DT::datatable(caption = "Table 3. Results of haplotypes association with plasma proteins")
+
+```
+
+
+```{r res, echo=FALSE}
+# Display the table
+
+#DT::datatable(result_sig, caption = "Results Table", options = list(pageLength = 10))
+#%>% knitr::kable_styling(position = "center") 
+#find /scratch/mfilosi -type f -name "*.Rmd"
+
+#knitr::kable(
+#  result_sig,
+  #"simple",
+  #"latex",
+  #digits = 5,
+  #format.args = list(scientific = TRUE), 
+#  full_width = FALSE,
+#  html_font = "Cambria", 
+#  caption = "Results Table of Association with Clinical Traits"
+#)
+
 ```
