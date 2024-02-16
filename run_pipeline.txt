@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+export MAMBA_ROOT_PREFIX=/shared/Software/micromamba
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate snakemake
+
+snakemake --jobs 8  --reason --until get_dosage --default-resource mem_gb=8192  --latency-wait 10  --keep-going  --cluster 'sbatch  -p fast -c 8 --mem-per-cpu=8GB'
+
+conda deactivate
+
+#sbatch run_pipeline.txt -p fast
