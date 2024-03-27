@@ -18,22 +18,25 @@ echo Working on "${n_SNPs}" exonic variants at "${locus}" locus...
 
 #------------------------#
 # directories
-genotype=data/genotype/${locus}.vcf.gz
-dosage=data/dosage/${locus}_dosage.txt
-variants=data/annotation/${locus}_variants.list
-annotation=data/annotation/${locus}_annotation.txt
-
+#genotype=data/genotype/${locus}.vcf.gz
+#dosage=results/dosage/${locus}_dosage.txt
+#variants=results/annotation/${locus}_variants.list
+#annotation=results/annotation/${locus}_annotation.txt
+vcf=$1
+dosage=$2
+variants=$3
+annotation=$4
 #------------------------#
 # extract variants in the region after merging
-bcftools query -f '[%SAMPLE\t%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\t%DS\n]' $genotype -o $dosage
+bcftools query -f '[%SAMPLE\t%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\t%DS\n]' $vcf -o $dosage
 sleep 5
 
 # extract variants alleles and alleles' frequencies 
-bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\n' $genotype -o $variants
+bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\n' $vcf -o $variants
 sleep 5
 
 # extract variants annotation
-bcftools +split-vep  -s worst -f '%CHROM\t%POS\t%ID\t%SYMBOL\t%Gene\t%Consequence\n' $genotype -o $annotation
+bcftools +split-vep  -s worst -f '%CHROM\t%POS\t%ID\t%SYMBOL\t%Gene\t%Consequence\n' $vcf -o $annotation && \
 
 #------------------------#
 # ending message!

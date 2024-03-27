@@ -1,6 +1,6 @@
 # History files
 .Rhistory
-.Rapp.history
+.Rpp.history
 
 # Session Data files
 .RData
@@ -37,7 +37,7 @@ po/*~
 rsconnect/
 
 # slurm output
-slurm*
+*.log
 *.out
 
 # data, outputs
@@ -46,10 +46,15 @@ phenotype/
 annotation/
 data/
 output/
+workflow/results
+logs/
+
 
 # Snakemake files
+
 .snakemake/*
 .snakemake/metadata/*
+*/.snakemake/*
 *.pdf
 
 *.png

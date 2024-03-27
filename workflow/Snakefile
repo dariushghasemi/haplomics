@@ -1,0 +1,180 @@
+import os
+from os.path import join as pjoin
+
+#{resources.mem_gb} \
+
+#------------------------#
+configfile: "../config/configuration.yml"
+
+# list of the desired loci
+loci = config["gene_set1"].split()
+pgenot = ""
+pannot = ""
+phisto = ""
+pgenes = ""
+
+#------------------------#
+from datetime import date
+
+today = date.today()
+my_date = today.strftime('%d-%b-%y')
+#print("Today is:", formatted_date)
+
+#------------------------#
+# a pseudo-rule that collects the target files
+rule all:
+	input:
+		expand("results/genotype/{locus}.vcf.gz", locus = loci),
+		#expand("results/genotype/{locus}.sentinel", locus = loci),
+		expand("results/dosage/{locus}_dosage.txt", locus = loci),
+		expand("results/annotation/{locus}_variants.list", locus = loci),
+		expand("results/annotation/{locus}_annotation.txt", locus = loci),
+		expand("results/plot_histogram/{locus}_plot_histo.png", locus = loci),
+		expand("results/plot_annotation/{locus}_plot_annotations.png", locus = loci),
+		expand("results/plot_genes/{locus}_plot_genes.png",      locus = loci),
+		expand("results/pheno/{locus}_haplotypes_data_phen.csv", locus = loci),
+		expand("results/pheno/{locus}_haplotypes_data_meta.csv", locus = loci),
+		expand("results/pheno/{locus}_haplotypes_data_prot.csv", locus = loci),
+		#expand("../output/result_associations/{locus}_association_results.RDS", day = my_date, locus = loci),
+		#expand("../output/plot_haplotypes/{locus}_plot_haplotypes.png", locus = loci, day = my_date),
+		#expand("../output/plot_haplotypes/{locus}_plot_haplotypes_shrinked.png", locus = loci, day = my_date),
+		#expand("../output/plot_heatmaps/{locus}_plot_heatmap_haplotypes_effect.png", locus = loci, day = my_date),
+		#expand("../output/report_html/{locus}_report.nb.html", locus = loci, day = my_date)
+
+
+#------------------------#
+rule get_locus:
+	input:
+		script = "scripts/01-1_subsetting_vcf.sh",
+		position = config["path_loci"],
+		vcf = config["path_vcf"]
+	output:
+		vcf = "results/genotype/{locus}.vcf.gz",
+		#sentinel = "results/genotype/{locus}.sentinel"
+	params:
+		position = config["path_loci"],
+		vcf = config["path_vcf"]
+	shell:
+		"""
+		bash {input.script} {input.position} {input.vcf} {output.vcf}
+		"""
+#------------------------#
+rule get_dosage:
+	input:
+		script = "scripts/01-2_extracting_dosage.sh",
+		vcf   = "results/genotype/{locus}.vcf.gz",
+		#sentinel = "results/genotype/{locus}.sentinel"
+	output:
+		dosage     = "results/dosage/{locus}_dosage.txt",
+		variants   = "results/annotation/{locus}_variants.list",
+		annotation = "results/annotation/{locus}_annotation.txt"
+	params: 
+		vcf = "results/genotype/{locus}.vcf.gz",
+		#sentinel = "results/genotype/{locus}.sentinel"
+	shell:
+		"""
+		bash {input.script} {input.vcf} {output.dosage} {output.variants} {output.annotation}
+		"""
+#------------------------#
+rule plot_histogram:
+	input:
+		script   = "scripts/01-3_plot_histogram.R",
+		variants = "results/annotation/{locus}_variants.list"
+	output:
+		plot = "results/plot_histogram/{locus}_plot_histo.png"
+	params:
+		variants = "results/annotation/{locus}_variants.list"
+	shell:
+		"""
+		Rscript {input.script} {input.variants} {output.plot}
+		"""
+#------------------------#
+rule plot_annotation:
+	input:
+		script = "scripts/01-4_plot_annotation.R",
+		annotation = "results/annotation/{locus}_annotation.txt"
+	output:
+		plot = "results/plot_annotation/{locus}_plot_annotations.png"
+	params:
+		annotation = "results/annotation/{locus}_annotation.txt"
+	shell:
+		"""
+		Rscript {input.script} {input.annotation} {output.plot}
+		"""
+#------------------------#
+rule plot_genes:
+	input:
+		script = "scripts/01-5_plot_genes.R",
+		annotation = "results/annotation/{locus}_annotation.txt"
+	output:
+		plot = "results/plot_genes/{locus}_plot_genes.png"
+	params:
+		annotation = "results/annotation/{locus}_annotation.txt"
+	shell:
+		"""
+		Rscript {input.script} {input.annotation} {output.plot}
+		"""
+#------------------------#
+rule merge_data:
+	input:
+		script = "scripts/03-1_haplotypes_data.R",
+		dosage = "results/dosage/{locus}_dosage.txt"
+	output:
+		ophen = "results/pheno/{locus}_haplotypes_data_phen.csv",
+		ometa = "results/pheno/{locus}_haplotypes_data_meta.csv",
+		oprot = "results/pheno/{locus}_haplotypes_data_prot.csv",
+	params:
+		dosage = "results/dosage/{locus}_dosage.txt"
+	shell:
+		"""
+		Rscript {input.script} {input.dosage} {output.ophen} {output.ometa} {output.oprot}
+		"""
+#------------------------#
+#rule build_haplotypes:
+#	input:
+#		script = "03-2_haplotypes_building.R",
+#		haplo_data = "data/pheno/{locus}_haplotypes_data.csv"
+#	output:
+#		result = "output/result_associations/{locus}_association_results.RDS"
+#	params:
+#		dosage = "data/dosage/{locus}_dosage.txt"
+#	shell:
+#		"""
+#		Rscript {input.script} {input.haplo_data}
+#		"""
+#------------------------#
+#rule plot_haplotypes:
+#	input:
+#		script = "03-3_haplotypes_plot.R",
+#		result = "output/result_associations/{locus}_association_results.RDS",
+#		annotation = "data/annotation/{locus}_annotation.txt",
+#		variants = "data/annotation/{locus}_variants.list"
+#	output:
+#		plot1 = "output/plot_haplotypes/{locus}_plot_haplotypes.png",
+#		plot2 = "output/plot_haplotypes/{locus}_plot_haplotypes_shrinked.png"
+#	params:
+#		result = "output/result_associations/{locus}_association_results.RDS",
+#		annotation = "data/annotation/{locus}_annotation.txt",
+#		variants = "data/annotation/{locus}_variants.list"
+#	shell:
+#		"""
+#		Rscript {input.script} {input.result} {input.annotation} {input.variants}
+#		"""
+#------------------------#
+#rule plot_associations:
+#	input:
+#		script = "03-4_haplotypes_heatmap.R",
+#		result = "output/result_associations/{locus}_association_results.RDS"
+#	output:
+#		plot = "output/plot_heatmaps/{locus}_plot_heatmap_haplotypes_effect.png"
+#	params:
+#		result = "output/result_associations/{locus}_association_results.RDS"
+#	shell:
+#		"""
+#		Rscript {input.script} {input.result}
+#		"""
+
+#------------------------#
+#ruleorder: get_locus > get_dosage > plot_histogram > plot_annotation > plot_genes > merge_data > build_haplotypes > plot_haplotypes > plot_associations
+#------------------------#
+

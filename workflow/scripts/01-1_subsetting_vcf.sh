@@ -7,11 +7,11 @@
 
 #------------------------#
 # directories
-WES=/scratch/compgen/data/genetics/CHRIS13K/Imputation/WES/CHRIS13K.WES.imputed.rsq03.vep.hg38.sorted.bgzip.vcf.gz
 imputed=/scratch/compgen/data/genetics/CHRIS13K/Imputation/TOPMed/
 main=/home/dghasemisemeskandeh/projects/haploAnalysis
-window=$main/$1
-output_dir=$main/data/genotype
+window=$1
+VCF=$2
+odir=$3
 
 # $1 is locus_window.txt
 #------------------------#
@@ -31,17 +31,17 @@ output_dir=$main/data/genotype
 # reading the file with info about window size!
 tail -n+2 $window | while IFS=$'\t' read -r chr beg end locus;
     do
-    # extract the chrom
+    # extract the chrom:beg-end coordinates
     window_size="$chr:$beg"-"$end"
     
-    # Generate the command to extract the region from the VCF file (and Print the command) #bgzip -c
-    bcftools view $WES -r ${window_size} -Oz -o $output_dir/${locus}.vcf.gz
-    sleep 30
+    # extract the region from the VCF
+    bcftools view $VCF -r ${window_size} -Oz -o $odir &&  \
+    #sleep 30
 
     # creating index file
-    tabix $output_dir/${locus}.vcf.gz
+    tabix $odir
 
     # Create sentinel file with the correct name
-    touch $output_dir/${locus}.sentinel
+    #touch $output_dir/${locus}.sentinel
 done
 #------------------------#

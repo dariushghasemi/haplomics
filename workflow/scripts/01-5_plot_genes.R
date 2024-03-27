@@ -17,18 +17,21 @@ today.date <- format(Sys.Date(), "%d-%b-%y")
 args <- commandArgs(trailingOnly = TRUE)
 
 annot_file <- args[1]
+oplot_file <- args[2]
 
 # taking the locus name
 locus_name <- gsub("_annotation.txt", "", basename(annot_file))
 
 # directories
-out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_genes/"
-out.plot <- paste0(locus_name, "_plot_genes.png") #today.date, "_", 
+#out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_genes/"
+#out.plot <- paste0(locus_name, "_plot_genes.png") #today.date, "_", 
 
 #------------------------#
+
 library(dplyr)
 library(stringr)
 library(ggplot2)
+library(ggtext)
 
 #------------------------#
 # define the columns names
@@ -75,7 +78,7 @@ plt_annot <- df_annot %>% plot_genes()
   
 #------------------------#
 # saving the histogram
-ggsave(plt_annot, filename = out.plot, width = 9.5, height = 5.5, dpi = 300, units = "in")
+ggsave(plt_annot, filename = oplot_file, width = 9.5, height = 5.5, dpi = 300, units = "in")
 
 #----------#
 # print time and date

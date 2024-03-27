@@ -180,4 +180,11 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 - Working to render properly the significant association table.
 
 
+- Analysis levereged for the seven left loci. These files were added:
+-> config/congfiguration.yaml
+-> cluster/config.yml
+-> workflow/results
+
+- Up to `03-2_haploype_build.R` was performed on the clusters (Wed, 23:50, 27-Mar-24).
+
 Dariush

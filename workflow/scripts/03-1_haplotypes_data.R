@@ -8,7 +8,19 @@
 
 #----------#
 
+is.installed <- function(package_name){
+    is.element(package_name, installed.packages()[,1])
+}
+
+# check if the package is installed
+if (!is.installed("config")){
+   install.packages("config");
+}
+
+#library(config)
 library(tidyverse)
+
+config <- config::get(file = "../config/configuration.yml")
 
 #----------#
 # print time and date
@@ -21,6 +33,16 @@ today.date <- format(Sys.Date(), "%d-%b-%y")
 # taking variants file as input
 args <- commandArgs(trailingOnly = TRUE)
 genotype_file <- args[1]
+ophen <- args[2]
+ometa <- args[3]
+oprot <- args[4]
+
+# data files imported from config file
+traits_blood   <- config$path_phen
+traits_metabol <- config$path_meta
+traits_protein <- config$path_prot
+principal_comp <- config$path_comp
+
 
 # taking the locus name
 locus_name  <- gsub("_dosage.txt", "", basename(genotype_file))
@@ -29,19 +51,9 @@ locus_name
 #----------#
 # directories
 
-base.dir <- "/home/dghasemisemeskandeh/projects"
-out.dir  <- paste0(base.dir, "/haploAnalysis/data/pheno/")
-data.dir <- paste0(base.dir, "/HaploReg/data")
-traits_blood   <- paste0(data.dir, "/chris_q-norm.csv")
-traits_metabol <- paste0(data.dir, "/chris_meta.csv")
-traits_protein <- paste0(data.dir, "/chris_prot.csv")
-principal_comp <- paste0(data.dir, "/CHRIS13K.GT.evecs")
-out.phen.csv <- paste0(out.dir, locus_name, "_haplotypes_data_phen.csv")
-out.meta.csv <- paste0(out.dir, locus_name, "_haplotypes_data_meta.csv")
-out.prot.csv <- paste0(out.dir, locus_name, "_haplotypes_data_prot.csv")
-out.phen.rds <- paste0(out.dir, locus_name, "_haplotypes_data_phen.RDS")
-out.meta.rds <- paste0(out.dir, locus_name, "_haplotypes_data_meta.RDS")
-out.prot.rds <- paste0(out.dir, locus_name, "_haplotypes_data_prot.RDS")
+#out.phen.rds <- paste0(out.dir, locus_name, "_haplotypes_data_phen.RDS")
+#out.meta.rds <- paste0(out.dir, locus_name, "_haplotypes_data_meta.RDS")
+#out.prot.rds <- paste0(out.dir, locus_name, "_haplotypes_data_prot.RDS")
 
 
 #-----------------------------------------------------#
@@ -192,9 +204,9 @@ str(merged_prot %>% select(- starts_with("chr")))
 
 #----------#
 # save the merged data
-write.csv(merged_phen, file = out.phen.csv, quote = F, row.names = F)
-write.csv(merged_meta, file = out.meta.csv, quote = F, row.names = F)
-write.csv(merged_prot, file = out.prot.csv, quote = F, row.names = F)
+write.csv(merged_phen, file = ophen, quote = F, row.names = F)
+write.csv(merged_meta, file = ometa, quote = F, row.names = F)
+write.csv(merged_prot, file = oprot, quote = F, row.names = F)
 
 #saveRDS(merged_data, file = output.rds)
 
@@ -218,7 +230,7 @@ message.data <- paste(
   "plasma proteins (n =",
   nrow(merged_prot),
   ") individuals on: \n",
-  out.phen.csv)
+  ophen)
 
 cat("\n", message.data, "\n")
 

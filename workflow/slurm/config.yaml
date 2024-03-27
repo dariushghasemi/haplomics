@@ -1,9 +1,9 @@
 __default__:
-  account: dghasemisemeskandeh
+  account: cpattaro
   partition: fast
   time: 03:30:00
   mem: 8G
-  cores: 3
+  cores: 1
 
 
 #snakemake --use-conda --cores 999 --cluster-config cluster.yaml --cluster "sbatch -p {cluster.partition} -c {cluster.cores} --mem-per-cpu={cluster.mem} " --jobs "04-1_report.Rmd"

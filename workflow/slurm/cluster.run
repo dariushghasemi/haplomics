@@ -1,0 +1,16 @@
+
+'''
+snakemake  \
+	--reason  \
+	--until get_locus  \
+	--jobs 3  \
+	--default-resource mem_gb=8GB  \
+	--latency-wait 30  \
+	--keep-going  \
+	--cluster '
+	sbatch  --partition fast  \
+			--cores 3  \
+			--mem-per-cpu=8800 \
+			--output  output/{rule}.{wildcards}.out \
+			--error   output/{rule}.{wildcards}.err'
+'''

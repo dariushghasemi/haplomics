@@ -1,0 +1,17 @@
+#values
+gene_set0: "SLC34A1 PDILT IGF1R"
+#gene_set1: "CASZ1 DDX1 DAB2 TMEM60 STC1 PIP5K1B GAB2"
+gene_set1: "DDX1"
+
+
+# pathes
+path_loci: "../config/locus_window_test.txt"
+path_vcf: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/WES/CHRIS13K.WES.imputed.rsq03.vep.hg38.sorted.bgzip.vcf.gz"
+
+# for R (03-1.R)
+default:
+    path_phen: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_q-norm.csv"
+    path_meta: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_meta.csv"
+    path_prot: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_prot.csv"
+    path_comp: "/home/dghasemisemeskandeh/projects/HaploReg/data/CHRIS13K.GT.evecs"
+    phenotypes: ""

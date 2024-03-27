@@ -11,14 +11,15 @@ today.date <- format(Sys.Date(), "%d-%b-%y")
 # taking variants file as input
 args <- commandArgs(trailingOnly = TRUE)
 variants_file <- args[1]
+hist_plt_file <- args[2]
 
 # taking the locus name
 locus_name  <- gsub("_variants.list", "", basename(variants_file))
 locus_name
 
 #----------#
-out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_histogram/"
-out.plt <- paste0(out.dir, locus_name, "_plot_histo.org") #today.date, "_", 
+#out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_histogram/"
+#out.plt <- paste0(out.dir, locus_name, "_plot_histo.org") #today.date, "_", 
 
 #------------------------#
 library(dplyr)
@@ -44,4 +45,4 @@ af_histo <- df_variants %>%
 
 #------------------------#
 # saving the histogram
-ggsave(af_histo, filename = out.plt, width = 9, height = 5.5, dpi = 300, units = "in")
+ggsave(af_histo, filename = hist_plt_file, width = 9, height = 5.5, dpi = 300, units = "in")
