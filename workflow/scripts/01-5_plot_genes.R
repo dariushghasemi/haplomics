@@ -22,10 +22,6 @@ oplot_file <- args[2]
 # taking the locus name
 locus_name <- gsub("_annotation.txt", "", basename(annot_file))
 
-# directories
-#out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_genes/"
-#out.plot <- paste0(locus_name, "_plot_genes.png") #today.date, "_", 
-
 #------------------------#
 
 library(dplyr)

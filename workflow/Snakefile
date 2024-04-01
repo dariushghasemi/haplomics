@@ -6,8 +6,10 @@ from os.path import join as pjoin
 #------------------------#
 configfile: "../config/configuration.yml"
 
-# list of the desired loci
-loci = config["gene_set1"].split()
+# inputes
+loci  = config["gene_set1"].split()
+assay = config["datasets"].split()
+
 pgenot = ""
 pannot = ""
 phisto = ""
@@ -24,22 +26,22 @@ my_date = today.strftime('%d-%b-%y')
 # a pseudo-rule that collects the target files
 rule all:
 	input:
-		expand("results/genotype/{locus}.vcf.gz", locus = loci),
+		#expand("results/genotype/{locus}.vcf.gz", locus = loci),
 		#expand("results/genotype/{locus}.sentinel", locus = loci),
-		expand("results/dosage/{locus}_dosage.txt", locus = loci),
-		expand("results/annotation/{locus}_variants.list", locus = loci),
-		expand("results/annotation/{locus}_annotation.txt", locus = loci),
+		#expand("results/dosage/{locus}_dosage.txt", locus = loci),
+		#expand("results/annotation/{locus}_variants.list", locus = loci),
+		#expand("results/annotation/{locus}_annotation.txt", locus = loci),
 		expand("results/plot_histogram/{locus}_plot_histo.png", locus = loci),
 		expand("results/plot_annotation/{locus}_plot_annotations.png", locus = loci),
-		expand("results/plot_genes/{locus}_plot_genes.png",      locus = loci),
-		expand("results/pheno/{locus}_haplotypes_data_phen.csv", locus = loci),
-		expand("results/pheno/{locus}_haplotypes_data_meta.csv", locus = loci),
-		expand("results/pheno/{locus}_haplotypes_data_prot.csv", locus = loci),
-		#expand("../output/result_associations/{locus}_association_results.RDS", day = my_date, locus = loci),
-		#expand("../output/plot_haplotypes/{locus}_plot_haplotypes.png", locus = loci, day = my_date),
-		#expand("../output/plot_haplotypes/{locus}_plot_haplotypes_shrinked.png", locus = loci, day = my_date),
-		#expand("../output/plot_heatmaps/{locus}_plot_heatmap_haplotypes_effect.png", locus = loci, day = my_date),
-		#expand("../output/report_html/{locus}_report.nb.html", locus = loci, day = my_date)
+		expand("results/plot_genes/{locus}_plot_genes.png", locus = loci),
+		#expand("results/pheno/{locus}_haplotypes_data_{assay}.csv", locus = loci, assay = assay),
+		##expand("results/pheno/{locus}_haplotypes_data_meta.csv", locus = loci),
+		##expand("results/pheno/{locus}_haplotypes_data_prot.csv", locus = loci),
+		#expand("results/result_associations/{locus}/{locus}_{assay}_association_results.RDS", locus = loci, assay = assay),
+		expand("results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes.png", locus = loci, assay = assay),
+		expand("results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes_shrinked.png", locus = loci, assay = assay),
+		expand("results/plot_heatmaps/{locus}/{locus}_{assay}_plot_heatmap_haplotypes_effect.png", locus = loci, assay = assay),
+		#expand("../output/report_html/{locus}_report.nb.html", locus = loci)
 
 
 #------------------------#
@@ -129,50 +131,68 @@ rule merge_data:
 		"""
 		Rscript {input.script} {input.dosage} {output.ophen} {output.ometa} {output.oprot}
 		"""
+
 #------------------------#
-#rule build_haplotypes:
-#	input:
-#		script = "03-2_haplotypes_building.R",
-#		haplo_data = "data/pheno/{locus}_haplotypes_data.csv"
-#	output:
-#		result = "output/result_associations/{locus}_association_results.RDS"
-#	params:
-#		dosage = "data/dosage/{locus}_dosage.txt"
-#	shell:
-#		"""
-#		Rscript {input.script} {input.haplo_data}
-#		"""
+def get_mem_mb(wildcards, attempt):
+    return 28672 + attempt * 4096
+
+rule build_haplotypes:
+	input:
+		script = "scripts/03-2_haplotypes_building.R",
+		data   = "results/pheno/{locus}_haplotypes_data_{assay}.csv"
+	output:
+		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS"
+	params:
+		dosage = "results/pheno/{locus}_haplotypes_data_{assay}"
+	log:
+		"logs/build_haplotypes/{locus}/{locus}_{assay}.log"
+	resources:
+		runtime=lambda wc, attempt: attempt * 240,
+		mem_mb=get_mem_mb,
+	shell:
+		"""
+		Rscript {input.script} {input.data} {output.result} 2> {log}
+		"""
 #------------------------#
-#rule plot_haplotypes:
-#	input:
-#		script = "03-3_haplotypes_plot.R",
-#		result = "output/result_associations/{locus}_association_results.RDS",
-#		annotation = "data/annotation/{locus}_annotation.txt",
-#		variants = "data/annotation/{locus}_variants.list"
-#	output:
-#		plot1 = "output/plot_haplotypes/{locus}_plot_haplotypes.png",
-#		plot2 = "output/plot_haplotypes/{locus}_plot_haplotypes_shrinked.png"
-#	params:
-#		result = "output/result_associations/{locus}_association_results.RDS",
-#		annotation = "data/annotation/{locus}_annotation.txt",
-#		variants = "data/annotation/{locus}_variants.list"
-#	shell:
-#		"""
-#		Rscript {input.script} {input.result} {input.annotation} {input.variants}
-#		"""
+rule plot_haplotypes:
+	input:
+		script = "scripts/03-3_haplotypes_plot.R",
+		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS",
+		annotation = "results/annotation/{locus}_annotation.txt",
+		variants = "results/annotation/{locus}_variants.list"
+	output:
+		plt1 = "results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes.png",
+		plt2 = "results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes_shrinked.png"
+	params:
+		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS",
+		annotation = "results/annotation/{locus}_annotation.txt",
+		variants = "results/annotation/{locus}_variants.list"
+	log:
+		"logs/plot_haplotypes/{locus}/{locus}_{assay}.log"
+	resources:
+		runtime=lambda wc, attempt: attempt * 30,
+	shell:
+		"""
+		Rscript {input.script} {input.result} {input.annotation} {input.variants} {output.plt1} {output.plt2} 2> {log}
+		"""
 #------------------------#
-#rule plot_associations:
-#	input:
-#		script = "03-4_haplotypes_heatmap.R",
-#		result = "output/result_associations/{locus}_association_results.RDS"
-#	output:
-#		plot = "output/plot_heatmaps/{locus}_plot_heatmap_haplotypes_effect.png"
-#	params:
-#		result = "output/result_associations/{locus}_association_results.RDS"
-#	shell:
-#		"""
-#		Rscript {input.script} {input.result}
-#		"""
+rule plot_associations:
+	input:
+		script = "scripts/03-4_haplotypes_heatmap.R",
+		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS"
+	output:
+		plot   = "results/plot_heatmaps/{locus}/{locus}_{assay}_plot_heatmap_haplotypes_effect.png",
+		table  = "results/signif_result/{locus}/{locus}_{assay}_haplotypes_association.csv"
+	params:
+		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS"
+	log:
+		"logs/plot_associations/{locus}/{locus}_{assay}.log"
+	resources:
+		runtime=lambda wc, attempt: attempt * 30,
+	shell:
+		"""
+		Rscript {input.script} {input.result} {output.plot} {output.table} 2> {log}
+		"""
 
 #------------------------#
 #ruleorder: get_locus > get_dosage > plot_histogram > plot_annotation > plot_genes > merge_data > build_haplotypes > plot_haplotypes > plot_associations

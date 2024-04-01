@@ -17,10 +17,6 @@ hist_plt_file <- args[2]
 locus_name  <- gsub("_variants.list", "", basename(variants_file))
 locus_name
 
-#----------#
-#out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_histogram/"
-#out.plt <- paste0(out.dir, locus_name, "_plot_histo.org") #today.date, "_", 
-
 #------------------------#
 library(dplyr)
 library(ggplot2)

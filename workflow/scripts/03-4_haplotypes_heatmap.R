@@ -17,9 +17,11 @@ today.date <- format(Sys.Date(), "%d-%b-%y")
 args <- commandArgs(trailingOnly = TRUE)
 
 rds_file <- args[1]
+out.plt  <- args[2]
+out.tbl  <- args[3]
 
 # taking the locus name
-locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_haplotypes_association_\\w+.RDS", "", basename(rds_file))
+locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_\\w+_haplotypes_association.RDS", "", basename(rds_file))
 locus_name
 
 # type of dataset
@@ -28,9 +30,9 @@ data_source
 
 #------------#
 # directories
-base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output"
-out.plot <- paste0(base.dir, "/plot_heatmaps/", locus_name, "_plot_heatmap_haplotypes_effect_on_", data_source, ".png") #today.date, "_", 
-out.tbl  <- paste0(base.dir, "/significant_result/", locus_name, "_haplotypes_association_with_", data_source, ".csv")
+base.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/workflow/results"
+#out.plot <- paste0(base.dir, "/plot_heatmaps/", locus_name, "_plot_heatmap_haplotypes_effect_on_", data_source, ".png") #today.date, "_", 
+#out.tbl  <- paste0(base.dir, "/significant_result/", locus_name, "_haplotypes_association_with_", data_source, ".csv")
 
 #------------#
 # function to install uninstalled required packages
@@ -39,13 +41,13 @@ is.installed <- function(package_name){
 }
 
 # check if package "Haplo.stats" is installed
-if (!is.installed("digest")){
-   install.packages("digest");
+if (!is.installed("pheatmap")){
+   install.packages("pheatmap");
 }
 
 #------------#
-library("tidyverse")
-library("pheatmap")
+suppressMessages(library("tidyverse"))
+suppressMessages(library("pheatmap"))
 
 #------------#
 # Function to generate a unique name for each unique combination of variants
@@ -92,7 +94,7 @@ haplo_dict0 <- readRDS(rds_file) %>%
 
 
 variants <- grep("^chr", names(haplo_dict0), value = TRUE)
-variants
+#variants
 
 haplo_dict <- haplo_dict0 %>% 
   #group_by(trait_name) %>% #count(trait_name) %>% print(n = Inf)
@@ -108,7 +110,7 @@ haplo_dict <- haplo_dict0 %>%
   ungroup() %>%
   select(trait_name, Haplotype, haplo)
 
-haplo_dict
+#haplo_dict
 
 #----------#
 # extract results and add harmonized haplo names 
@@ -168,7 +170,7 @@ check_haplo
 
 #----------#
 # pheatmap
-png(out.plot, units = "in", res = 500, width = 19, height = 6) # for traits use width = 12
+png(out.plt, units = "in", res = 500, width = 19, height = 6) # for traits use width = 12
 
 pheatmap(results_heatmap[-1],
          #color = hcl.colors(50, "Blue-Red 2"),

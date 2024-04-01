@@ -1,9 +1,34 @@
-__default__:
+jobs: 100
+retries: 3
+max-jobs-per-second: 10
+max-status-checks-per-second: 1
+local-cores: 1
+cores: &cores 8
+latency-wait: 60
+keep-going: True
+rerun-incomplete: False
+printshellcmds: True
+#scheduler: ilp
+#scheduler="processes"
+
+#__default__:
+default-resources:
   account: cpattaro
-  partition: fast
-  time: 03:30:00
-  mem: 8G
+  partition: batch
+  #time: 24:00:00
+  #mem: 8G
+  #disk: 120GB
   cores: 1
+  slurm_partition: batch
+  mem_mb: attempt * 4096
+  disk_mb: 120000
+  threads: 8
+  runtime: attempt * 300
+
+#set-resources:
+  #build_haplotypes:
+    #mem_mb: 18432 + attempt * 2048
+    #threads: *cores
 
 
 #snakemake --use-conda --cores 999 --cluster-config cluster.yaml --cluster "sbatch -p {cluster.partition} -c {cluster.cores} --mem-per-cpu={cluster.mem} " --jobs "04-1_report.Rmd"

@@ -1,12 +1,13 @@
 #values
 gene_set0: "SLC34A1 PDILT IGF1R"
-#gene_set1: "CASZ1 DDX1 DAB2 TMEM60 STC1 PIP5K1B GAB2"
-gene_set1: "DDX1"
-
+gene_set1: "CASZ1 DDX1 TMEM60 STC1 PIP5K1B"
+#gene_set1: "DAB2 GAB2"
+datasets: "phen meta prot"
 
 # pathes
-path_loci: "../config/locus_window_test.txt"
+path_loci: "../config/locus_window.txt"
 path_vcf: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/WES/CHRIS13K.WES.imputed.rsq03.vep.hg38.sorted.bgzip.vcf.gz"
+path_rep: "/home/dghasemisemeskandeh/projects/haploAnalysis/workflow"
 
 # for R (03-1.R)
 default:

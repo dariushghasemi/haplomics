@@ -1,4 +1,4 @@
-# haploAnalysis
+## haploAnalysis
 Haplotype analysis pipeline for the replicated genetic kidney loci in CHRIS study
 
 - Attaining the total number of variants (Sat, 17:42, 22-Oct-23):
@@ -27,7 +27,7 @@ micromamba activate snakemake
 # to see the activated environments
 micromamba env list
 ```
-# Analysis steps
+## Analysis steps
 - Step 1: defining the window for each locus respect to the recombination rate
 - Step 2: extracting the variants within the window (or recombination spikes)
 - Step 3: taking dosage level of the extracted variants for each locus
@@ -63,17 +63,6 @@ output:
 	odir = directory("genotype/{locus}"),
 	ofile = "genotype/{locus}/{locus}.vcf.gz"
 
-rule all:
-	input:
-		"genotype/PDILT.vcf.gz",
-		"genotype/SLC34A1.vcf.gz",
-		"genotype/IGF1R.vcf.gz",
-		"genotype/PDILT_dosage.txt",
-		"genotype/SLC34A1_dosage.txt",
-		"genotype/IGF1R_dosage.txt",
-		"genotype/PDILT_variants.list",
-		"genotype/SLC34A1_variants.list",
-		"genotype/IGF1R_variants.list"
 
 # or 
 # Determine the {vcf} for all loci
@@ -133,23 +122,6 @@ snakemake  --use-conda  --reason --until get_locus --jobs 3  --default-resource 
 snakemake --jobs 3  --reason --until get_dosage --default-resource mem_gb=8192  --latency-wait 10  --keep-going  --cluster 'sbatch  -p fast -c 3 --mem-per-cpu=8GB'
 ```
 
-
-```
-#------------------------#
-rule render_report:
-    input:
-        script = "04-1_report_run.sh",
-        reprt  = "04-0_report.Rmd"
-    output:
-        html = "{locus}_report.nb.html"
-    params:
-        locus = "{locus}"
-    shell:
-        """
-		bash {input.script} {params.locus}
-		"""
-```
-
 - Update the pipeline to have consistant name and wildcards for reporting and performing on cluster (Fri, 19:50, 22-Dec-23).
 
 ```bash
@@ -180,11 +152,18 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 - Working to render properly the significant association table.
 
 
+## Pipeline on clustered computers
+
 - Analysis levereged for the seven left loci. These files were added:
--> config/congfiguration.yaml
--> cluster/config.yml
--> workflow/results
+    - config/congfiguration.yaml
+    - cluster/config.yml
+    - workflow/results
 
 - Up to `03-2_haploype_build.R` was performed on the clusters (Wed, 23:50, 27-Mar-24).
+
+- Haplotypes for the rest of the loci are being analyzed on the clusters. In addition, reporting the analyses in Rmarkdown is integrated into the pipeline in a separe rule (for now).
+
+- So, the analysis is approaching to the end and it's time to start writng the paper (Mon, 02:53, 01-Apr-24).
+
 
 Dariush

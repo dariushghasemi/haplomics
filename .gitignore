@@ -56,5 +56,7 @@ logs/
 .snakemake/metadata/*
 */.snakemake/*
 *.pdf
-
 *.png
+*.html
+
+

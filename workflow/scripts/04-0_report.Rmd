@@ -4,7 +4,17 @@ title: "Haplotype Analysis Report for *`r params$LOCUS`*"
 author: Dariush Ghasemi
 params:
   date: !r Sys.Date()
-  LOCUS: "PDILT"
+  LOCUS: "o"
+  ASSAY: "o"
+  zoom: "o"
+  hist: "o"
+  anot: "o"
+  gene: "o"
+  hap1: "o"
+  hap2: "o"
+  heat: "o"
+  res: "o"
+  
 output: 
   html_notebook:
     theme: journal #united #flatly
@@ -20,40 +30,28 @@ format:
     transition: slide,
     background-transition: fade
 editor: visual
+geometry: margin=0.95in
 ---
 
 ### Date: `r format(Sys.Date(), "%B %d, %Y")`
 
 ```{r, echo=FALSE}
 #date: !r Sys.Date()
-#Sys.Date()
+Sys.Date()
 ```
+
+Workig directory is: `r getwd()`
 
 ```{r, echo=FALSE}
 # date
 today.date <- format(Sys.Date(), "%d-%b-%y")
-#base.dir <- 
-regional   <- paste0("~/projects/gwas/05_regional_association/LZ_plots/09-Mar-23_", params$LOCUS, "-1.png")
-density    <- paste0("output/plot_histogram/old/26-Oct-23_plot_histo_", params$LOCUS, ".png")
-annotation <- paste0("output/plot_annotations/old/18-Dec-23_", params$LOCUS, "_plot_annotations.png")
-genes      <- paste0("output/plot_genes/old/18-Dec-23_", params$LOCUS, "_plot_genes.png")
-haplotypes <- paste0("output/plot_haplotypes/", params$LOCUS, "_plot_haplotypes.png")
-haplotypes.shrinked <- paste0("output/plot_haplotypes/", params$LOCUS, "_plot_haplotypes_shrinked.png")
-heatmap.phen <- paste0("output/plot_heatmaps/", params$LOCUS, "_plot_heatmap_haplotypes_effect_on_phen.png")
-heatmap.meta <- paste0("output/plot_heatmaps/", params$LOCUS, "_plot_heatmap_haplotypes_effect_on_meta.png")
-heatmap.prot <- paste0("output/plot_heatmaps/", params$LOCUS, "_plot_heatmap_haplotypes_effect_on_prot.png")
-res.sig.phen <- paste0("output/significant_result/", params$LOCUS, "_haplotypes_association_with_phen.csv")
-res.sig.meta <- paste0("output/significant_result/", params$LOCUS, "_haplotypes_association_with_meta.csv")
-res.sig.prot <- paste0("output/significant_result/", params$LOCUS, "_haplotypes_association_with_prot.csv")
 
 ```
-
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
 
 
 ```{r, include=FALSE}
@@ -69,11 +67,8 @@ library(tidyverse)
 ```
 
 
-
-
 ### Introduction
 This is a report of Haplotype reconstrauction analysis for *`r params$LOCUS`* generated using RMarkdown.
-
 
 
 ### Plot Variants Allele Frequency
@@ -85,7 +80,7 @@ This is a report of Haplotype reconstrauction analysis for *`r params$LOCUS`* ge
 #p3 <- ggdraw() + draw_image(annotation)
 #plot_grid(p1, p2, p3, cnol = 2)
 
-knitr::include_graphics(density)
+knitr::include_graphics(params$hist)
 ```
 
 |
@@ -96,7 +91,7 @@ knitr::include_graphics(density)
 
 ```{r LocusZoom, echo=FALSE, fig.align="center", out.width='70%', fig.cap="Figure 1. Regional association plot of the locus"}
 
-knitr::include_graphics(regional)
+knitr::include_graphics(params$zoom)
 ```
 
 |
@@ -107,7 +102,7 @@ knitr::include_graphics(regional)
 
 ```{r genes, echo=FALSE, fig.align="center", out.width='70%', fig.cap="Figure 2. Number of the variants in each gene"}
 
-knitr::include_graphics(genes)
+knitr::include_graphics(params$gene)
 ```
 
 |
@@ -118,29 +113,7 @@ knitr::include_graphics(genes)
 
 ```{r annotation, echo=FALSE, fig.align="center", out.width='70%', fig.cap="Figure 3. Annotation of the variants in each gene"}
 
-knitr::include_graphics(annotation)
-```
-
-|
-|
-|
-
-### Plot Haplotypes
-
-```{r haplotypes, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='100%', fig.cap="Figure 4. Haplotypes"}
-
-knitr::include_graphics(haplotypes)
-```
-
-|
-|
-|
-
-### Plot Haplotypes Narrowed
-
-```{r haplotypes narrowed, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='70%', fig.cap="Figure 5. Haplotypes narrowed with varied variants"}
-
-knitr::include_graphics(haplotypes.shrinked)
+knitr::include_graphics(params$anot)
 ```
 
 |
@@ -149,11 +122,34 @@ knitr::include_graphics(haplotypes.shrinked)
 
 ### Results for Clinical Traits 
 
+#### Plot Haplotypes
+
+```{r haplotypes, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='100%', fig.cap="Figure 4. Haplotypes"}
+
+knitr::include_graphics(str_split(params$hap1, " ", simplify = TRUE)[,1])
+```
+
+|
+|
+|
+
+#### Plot Haplotypes Narrowed
+
+```{r haplotypes narrowed, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='70%', fig.cap="Figure 5. Haplotypes narrowed by varied variants"}
+
+knitr::include_graphics(str_split(params$hap2, " ", simplify = TRUE)[,1])
+```
+
+|
+|
+|
+
+
 #### Plot Heatmap: Haplotypes Associations with Clinical Traits
 
 ```{r heatmap traits, echo=FALSE, fig.align="center", out.width='90%', fig.cap="Figure 6. Heatmap Plot - Clinical traits"}
 
-knitr::include_graphics(heatmap.phen)
+knitr::include_graphics(str_split(params$heat, " ", simplify = TRUE)[,1])
 ```
 
 |
@@ -164,7 +160,8 @@ knitr::include_graphics(heatmap.phen)
 
 ```{r significant results traits, echo=FALSE, message=FALSE, warning=TRUE}
 
-result_phen <- read.delim(file = res.sig.phen, header = TRUE, sep = ",", comment.char = "")
+res_phen    <- str_split(params$res, " ", simplify = TRUE)[,1]
+result_phen <- read.delim(file = res_phen, header = TRUE, sep = ",", comment.char = "")
 
 # show the results
 result_phen %>% DT::datatable(caption = "Table 1. Results of haplotypes association with clinical traits")
@@ -176,11 +173,29 @@ result_phen %>% DT::datatable(caption = "Table 1. Results of haplotypes associat
 
 ### Results for Serum Metabolites
 
+#### Plot Haplotypes
+
+```{r haplotypes metabol, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='100%', fig.cap="Figure 7. Haplotypes in the subset with metabolites"}
+
+#knitr::include_graphics(params$hap1[2])
+```
+
+|
+|
+|
+
+#### Plot Haplotypes Narrowed
+
+```{r haplotypes narrowed metabol, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='70%', fig.cap="Figure 8. Haplotypes narrowed by varied variants in the subset with metabolites"}
+
+#knitr::include_graphics(params$hap2[2])
+```
+
 #### Plot Heatmap: Haplotypes Associations with Serum Metabolites
 
-```{r heatmap metabolites, echo=FALSE, fig.align="center", out.width='120%', fig.cap="Figure 7. Heatmap Plot - Metabolites"}
+```{r heatmap metabolites, echo=FALSE, fig.align="center", out.width='120%', fig.cap="Figure 9. Heatmap Plot - Metabolites"}
 
-knitr::include_graphics(heatmap.meta)
+knitr::include_graphics(str_split(params$heat, " ", simplify = TRUE)[,2])
 ```
 
 |
@@ -190,10 +205,11 @@ knitr::include_graphics(heatmap.meta)
 #### Significant Associations with Metabolites
 ```{r significant results metabolites, echo=FALSE, message=FALSE, warning=TRUE}
 
-result_phen <- read.delim(file = res.sig.meta, header = TRUE, sep = ",", comment.char = "")
+res_meta    <- str_split(params$res, " ", simplify = TRUE)[,2]
+result_meta <- read.delim(file = res_meta, header = TRUE, sep = ",", comment.char = "")
 
 # show the results
-result_phen %>% DT::datatable(caption = "Table 2. Results of haplotypes association with serum metabolites")
+result_meta %>% DT::datatable(caption = "Table 2. Results of haplotypes association with serum metabolites")
 ```
 
 |
@@ -202,24 +218,46 @@ result_phen %>% DT::datatable(caption = "Table 2. Results of haplotypes associat
 
 ### Results for Plasma Proteins
 
-#### Plot Heatmap: Haplotypes Associations with Proteins
+#### Plot Haplotypes
 
-```{r heatmap protein, echo=FALSE, fig.align="center", out.width='120%', fig.cap="Figure 8. Heatmap Plot - Proteins"}
+```{r haplotypes prot, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='100%', fig.cap="Figure 10. Haplotypes in the subset with proteins"}
 
-knitr::include_graphics(heatmap.prot)
+#knitr::include_graphics(params$hap1[3])
 ```
 
+|
+|
+|
 
+#### Plot Haplotypes Narrowed
+
+```{r haplotypes narrowed prot, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='70%', fig.cap="Figure 11. Haplotypes narrowed by varied variants in the subset with proteins"}
+
+#knitr::include_graphics(params$hap2[3])
+```
+
+|
+|
+|
+
+#### Plot Heatmap: Haplotypes Associations with Proteins
+
+```{r heatmap protein, echo=FALSE, fig.align="center", out.width='120%', fig.cap="Figure 12. Heatmap Plot - Proteins"}
+
+knitr::include_graphics(str_split(params$heat, " ", simplify = TRUE)[,3])
+```
 
 #### Significant Associations with Plasma Proteins
 
 ```{r significant results protein, echo=FALSE, message=FALSE, warning=TRUE}
 
-result_prot <- read.delim(file = res.sig.prot, header = TRUE, sep = ",", comment.char = "")
+res_prot    <- str_split(params$res, " ", simplify = TRUE)[,3]
+result_prot <- read.delim(file = res_prot, header = TRUE, sep = ",", comment.char = "")
+
 #result_sig <- result_sig %>% arrange(p.value, haplo)
 
 # change columns names
-#names(result_sig) <- names(result_sig) %>% str_remove("X\\.+\\d\\.")
+##names(result_sig) <- names(result_sig) %>% str_remove("X\\.+\\d\\.")
 
 # show the results
 result_prot %>% DT::datatable(caption = "Table 3. Results of haplotypes association with plasma proteins")

@@ -6,9 +6,8 @@
 # for all of the 11 replicated kidney loci.
 
 #----------#
-
-library(tidyverse)
-library(haplo.stats)
+# load configuration file
+config <- config::get(file = "../config/configuration.yml")
 
 #----------#
 
@@ -21,6 +20,10 @@ if (!is.installed("haplo.stats")){
    install.packages("haplo.stats");
 }
 
+# load libraries
+suppressMessages(library(tidyverse, quietly = TRUE))
+suppressMessages(library(haplo.stats, quietly = TRUE))
+
 #----------#
 # print time and date
 Sys.time()
@@ -32,6 +35,7 @@ today.date <- format(Sys.Date(), "%d-%b-%y")
 # taking variants file as input
 args <- commandArgs(trailingOnly = TRUE)
 pheno.geno <- args[1]
+out.assoc  <- args[2]
 
 # taking the locus name
 locus_name  <- gsub("_haplotypes_data_\\w+.csv", "", basename(pheno.geno))
@@ -40,16 +44,6 @@ locus_name
 # type of dataset
 data_source <- gsub("(\\w+|\\d)_haplotypes_data_|.csv", "", basename(pheno.geno))
 data_source
- 
-#----------#
-# directories
-
-base.dir   <- "/home/dghasemisemeskandeh/projects/haploAnalysis"
-data.dir   <- paste0(base.dir, "/data/pheno/")
-out.dir    <- paste0(base.dir, "/output/result_association/")
-#pheno.geno <- paste0(data.dir, locus_name, "_haplotypes_data.RDS")
-output.rds <- paste0(out.dir, locus_name, "_haplotypes_association_with_", data_source, ".RDS")
-output.rds
 
 
 #-----------------------------------------------------#
@@ -74,7 +68,15 @@ merged_data <- read.csv(pheno.geno, header = TRUE, stringsAsFactors = FALSE)
 # for test run
 #merged_data <- merged_data %>% select(AID, Sex, Age, putrescine, glu, pc_ae_c30_0, PC1:PC10, starts_with("chr"))
 #merged_data <- merged_data %>% select(AID, Sex, Age, APOC1_P02654, C1QB_P02746, F12_P00748, PC1:PC10, starts_with("chr"))
+#merged_data <- merged_data %>% select(
+#  AID, Sex, Age, 
+#  any_of(c("PTT", "eGFRw",
+#  "putrescine", "glu", "pc_ae_c30_0",
+#  "APOC1_P02654", "C1QB_P02746", "F12_P00748")),
+#  PC1:PC10,
+#  starts_with("chr"))
 
+# "HDL", "BMI", "TSH", 
 
 #-----------------------------------------------------#
 #-------            Haplotype data           ---------
@@ -105,7 +107,7 @@ haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-AID, -start
 #----------#
 
 dim(haplo_dataset)
-str(haplo_dataset)
+#str(haplo_dataset)
 
 
 #-----------------------------------------------------#
@@ -158,16 +160,18 @@ hap_model <- function(df){
 # Retrieving haplotypes from fitted models and their frequencies
 haplo_extract <- function(model) {
   
-  haplo_set <- 
-    summary(model)$haplotypes %>%
+  haplo_set <- summary(model)$haplotypes %>%
     rownames_to_column(var = "Haplotype") %>%
     mutate(Haplotype = str_replace(
       Haplotype,
       "(?<=\\.)\\d{1,2}(?!\\d)",
       sprintf("%03d", as.numeric(str_extract(Haplotype, "(?<=\\.)\\d{1,2}(?!\\d)")))),
-      Haplotype = str_replace_all(Haplotype,
-                                  c("haplo_genotype." = "H",
-                                    "haplo.base"      = "Ref.")))
+      Haplotype = str_replace_all(
+	    Haplotype, c(
+		    "haplo_genotype." = "H",
+            "haplo.base"      = "Ref.")
+			)
+	)
   
   return(haplo_set)
 }
@@ -204,7 +208,7 @@ cat("\nSaving results...\n")
 results_shrinked <- results %>% select(trait_name, haplotype, tidy)
 
 # saving the results
-saveRDS(results_shrinked, output.rds)
+saveRDS(results_shrinked, out.assoc)
 
 #----------#
 # print time and date

@@ -8,7 +8,7 @@
 
 #----------#
 
-library(tidyverse)
+suppressMessages(library(tidyverse))
 
 #----------#
 # print time and date
@@ -23,18 +23,13 @@ args <- commandArgs(trailingOnly = TRUE)
 rds_file <- args[1]
 vep_file <- args[2]
 snp_file <- args[3]
+out.plt1 <- args[4]
+out.plt2 <- args[5]
 
 # taking locus name
-#locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_association_results_.+.RDS", "", basename(rds_file))
-locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_haplotypes_association.RDS", "", basename(rds_file))
+locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_\\w+_association_results_.+.RDS", "", basename(rds_file))
+#locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_haplotypes_association.RDS", "", basename(rds_file))
 locus_name
-
-#----------#
-# directories
-out.dir <- "/home/dghasemisemeskandeh/projects/haploAnalysis/output/plot_haplotypes/"
-out.plot1 <- paste0(out.dir, locus_name, "_plot_haplotypes.png") #today.date, "_", 
-out.plot2 <- paste0(out.dir, locus_name, "_plot_haplotypes_shrinked.png") #today.date, "_", 
-
 
 #-----------------------------------------------------#
 #------                read data                ------
@@ -287,8 +282,8 @@ hap_plt <- data_hap_plt %>% haplo_plot()
 
 #----------#
 # save haplotypes plot
-ggsave(hap_plt, filename = out.plot1, width = num_snps     / 5 + 0.5, height = num_haplo / 2 + 1.5, dpi = 350, units = "in", limitsize = FALSE)
-ggsave(shr_plt, filename = out.plot2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 2 - 1.5, dpi = 350, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
+ggsave(hap_plt, filename = out.plt1, width = num_snps     / 5 + 0.5, height = num_haplo / 2 + 1.5, dpi = 350, units = "in", limitsize = FALSE)
+ggsave(shr_plt, filename = out.plt2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 2 - 1.5, dpi = 350, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
 
 #----------#
 # print time and date
