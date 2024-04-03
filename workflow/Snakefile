@@ -147,7 +147,7 @@ rule build_haplotypes:
 	log:
 		"logs/build_haplotypes/{locus}/{locus}_{assay}.log"
 	resources:
-		runtime=lambda wc, attempt: attempt * 240,
+		runtime=lambda wc, attempt: attempt * 6000,
 		mem_mb=get_mem_mb,
 	shell:
 		"""

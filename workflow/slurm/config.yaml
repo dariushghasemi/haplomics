@@ -1,3 +1,4 @@
+#executor: SLURM
 jobs: 100
 retries: 3
 max-jobs-per-second: 10
@@ -8,27 +9,30 @@ latency-wait: 60
 keep-going: True
 rerun-incomplete: False
 printshellcmds: True
-#scheduler: ilp
+scheduler: ilp
 #scheduler="processes"
 
-#__default__:
 default-resources:
   account: cpattaro
-  partition: batch
-  #time: 24:00:00
-  #mem: 8G
-  #disk: 120GB
-  cores: 1
-  slurm_partition: batch
+  slurm_partition: slow
+  #slurm_account: cpattaro
   mem_mb: attempt * 4096
-  disk_mb: 120000
+  disk_mb: 32000
   threads: 8
   runtime: attempt * 300
 
-#set-resources:
-  #build_haplotypes:
-    #mem_mb: 18432 + attempt * 2048
-    #threads: *cores
+set-resources:
+    build_haplotypes:
+        mem_mb: 34432 + attempt * 2048
+        threads: *cores
 
 
 #snakemake --use-conda --cores 999 --cluster-config cluster.yaml --cluster "sbatch -p {cluster.partition} -c {cluster.cores} --mem-per-cpu={cluster.mem} " --jobs "04-1_report.Rmd"
+#snakemake --jobs 8  --reason --until get_dosage --default-resource mem_gb=8192  --latency-wait 10  --keep-going  --cluster 'sbatch  -p fast -c 8 --mem-per-cpu=8GB'
+
+#__default__:
+  #partition: slow
+  #time: 24:00:00
+  #mem: 8G
+  #disk: 120GB
+  #cores: 5
