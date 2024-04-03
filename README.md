@@ -165,5 +165,10 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 
 - So, the analysis is approaching to the end and it's time to start writng the paper (Mon, 02:53, 01-Apr-24).
 
+- Once facing with this error:  `snakemake: error: unrecognized arguments: --executor=slurm`, just need to add `--slurm --cluster-config slurm/` to make file `run_pipeline.sh` and rerun it (Wed, 05:00, 03-Mar-24).
+- Check if the scripts are executable: `SLURM job submission failed. The error message was sbatch: error: Unable to open file +` -> solution: `chmod 755 <scripy.format>`
+
+- To check the app version, run `snakemake --version -> 7.32.4`
+
 
 Dariush
