@@ -27,20 +27,20 @@ micromamba activate snakemake
 # to see the activated environments
 micromamba env list
 ```
-## Analysis steps
+## Analysis steps for each locus
 - Step 1: defining the window for each locus respect to the recombination rate
-- Step 2: extracting the variants within the window (or recombination spikes)
-- Step 3: taking dosage level of the extracted variants for each locus
-- Step 4: taking annotations of the extracted variants using bcftools' vep plugin
+- Step 2: extracting variants within the window (or recombination spikes)
+- Step 3: taking dosage level of the extracted variants
+- Step 4: taking annotations of the extracted variants from vcf using bcftools' vep plugin
 - Step 5: taking alleles and their frequency from vcf file
 - Step 6: depicting alelle frequencies of the variants
 - Step 7: depicting consequences of the variants
 - Step 8: depicting frequency of the variants across the genes at the locus
 - Step 9: merging the dosage levels and phenotypes
-- Step 10: building the haplotypes at each locus and test their association with the health traits
-- Step 11: depicting the reconstructed haplotypes
+- Step 10: building haplotypes and test their association with the phenotypes
+- Step 11: depicting the reconstructed haplotypes (full and varied variants)
 - Step 12: visulaizing association results via heatmap plot
-- Step 13: reporting the results for each locus using Rmarkdown
+- Step 13: reporting the results using Rmarkdown
 
 ```bash
 rule targets:
@@ -166,9 +166,13 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 - So, the analysis is approaching to the end and it's time to start writng the paper (Mon, 02:53, 01-Apr-24).
 
 - Once facing with this error:  `snakemake: error: unrecognized arguments: --executor=slurm`, just need to add `--slurm --cluster-config slurm/` to make file `run_pipeline.sh` and rerun it (Wed, 05:00, 03-Mar-24).
+
 - Check if the scripts are executable: `SLURM job submission failed. The error message was sbatch: error: Unable to open file +` -> solution: `chmod 755 <scripy.format>`
 
 - To check the app version, run `snakemake --version -> 7.32.4`
 
+- The haplotype building step took so long (>7 hours with 420 variants) compared to the rest of the loci. I had to narrow the window to the end of PIPKA1B gene to lower variants and haplotypes. In the end, the pipeline was implemented on the whole 11 loci and the results were integrated into the html report using Rmarkdown. These reports were saved into a `results/report_html` directory and the PI got informed. It is time to compose the manuscript of the pipeline (Sun, 17:05, 07-Apr-24).
+
+- The pipeline should be tested via the latest version of snakemake before the official release to make sure of the flixibility of the pipeline to dynamically deal with the errors pertaining the memory and RAM insufficiency and running time limitation (Sun, 17:05, 07-Apr-24). 
 
 Dariush

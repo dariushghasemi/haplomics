@@ -10,8 +10,9 @@
 imputed=/scratch/compgen/data/genetics/CHRIS13K/Imputation/TOPMed/
 main=/home/dghasemisemeskandeh/projects/haploAnalysis
 window=$1
-VCF=$2
-odir=$3
+LOCUS=$2
+VCF=$3
+odir=$4
 
 # $1 is locus_window.txt
 #------------------------#
@@ -30,18 +31,18 @@ odir=$3
 #------------------------#
 # reading the file with info about window size!
 tail -n+2 $window | while IFS=$'\t' read -r chr beg end locus;
-    do
-    # extract the chrom:beg-end coordinates
-    window_size="$chr:$beg"-"$end"
+  do
+    # Check if locus matches the input LOCUS
+    if [ "$locus" == "$LOCUS" ]; then
+	
+      # extract the chrom:beg-end coordinates
+      window_size="$chr:$beg"-"$end"
     
-    # extract the region from the VCF
-    bcftools view $VCF -r ${window_size} -Oz -o $odir &&  \
-    #sleep 30
+      # extract the region from the VCF
+      bcftools view $VCF -r ${window_size} -Oz -o $odir &&  \
 
-    # creating index file
-    tabix $odir
-
-    # Create sentinel file with the correct name
-    #touch $output_dir/${locus}.sentinel
+      # creating index file
+      tabix $odir
+	fi
 done
 #------------------------#

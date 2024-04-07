@@ -19,6 +19,7 @@ args <- commandArgs(trailingOnly = TRUE)
 rds_file <- args[1]
 out.plt  <- args[2]
 out.tbl  <- args[3]
+rds_out  <- args[4]
 
 # taking the locus name
 locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_\\w+_haplotypes_association.RDS", "", basename(rds_file))
@@ -77,8 +78,6 @@ is_identical_haplotype <- function(df, haplotype) {
   
   return(all(identical_rows))
 }
-#----------#
-problematic <- c("ALT_GPT","AST_GOT","DBP","SBP","Pulse_Rate","FT4","ALP","FE_Alb","Iron", "TS", "APTT")
 
 #----------#
 # saving haplotype name
@@ -87,15 +86,12 @@ haplo_dict0 <- readRDS(rds_file) %>%
   select(trait_name, haplotype) %>% 
   unnest(haplotype) %>% 
   select(- hap.freq) %>% 
-  filter(Haplotype != "Hrare") #%>% 
-  #slice_head(n=72) %>% 
-  #count(trait_name) %>% print(n=Inf)
-  #filter(!trait_name %in% problematic)
-
+  filter(Haplotype != "Hrare")
 
 variants <- grep("^chr", names(haplo_dict0), value = TRUE)
-#variants
 
+#----------#
+# changing haplotype name
 haplo_dict <- haplo_dict0 %>% 
   #group_by(trait_name) %>% #count(trait_name) %>% print(n = Inf)
   #change_haplo_name(.)
@@ -109,8 +105,6 @@ haplo_dict <- haplo_dict0 %>%
   ) %>%
   ungroup() %>%
   select(trait_name, Haplotype, haplo)
-
-#haplo_dict
 
 #----------#
 # extract results and add harmonized haplo names 
@@ -135,16 +129,25 @@ get_results <- function(df) {
 }
 
 #----------#
-# preparing results for drawing heatmap
+# reshaping results for drawing heatmap
 res_to_heat <- function(df){
   
   df %>%
-    # reshaping results for pheatmap
     select(trait_name, haplo, estimate) %>%
     filter(haplo != "Ref.") %>%
     mutate(trait_name = str_replace_all(trait_name, "_", ":")) %>%
-    pivot_wider(names_from = trait_name, values_from = estimate) #%>%(- haplo)
+    pivot_wider(names_from = trait_name, values_from = estimate)
 }
+
+#----------#
+# saving tidied results for report
+results_heatmap <- readRDS(rds_file) %>% 
+  get_results() %>% 
+  filter(haplo != "Ref.") %>% 
+  select(trait_name, haplo, estimate, std.error, statistic, p.value) %>%
+  arrange(haplo, p.value)
+
+saveRDS(results_heatmap, rds_out)
 
 #----------#
 # saving nominal significant associations
@@ -162,22 +165,26 @@ write.csv(results_sig, file = out.tbl, row.names = FALSE, quote = FALSE)
 #----------#
 # Reading and manipulating the association results for illustartion
 # 01: Blood biomarkers, 02: Proteins, 03: Metabolites
-results_heatmap <- readRDS(rds_file) %>% get_results() %>% res_to_heat()
-results_heatmap
 
-check_haplo <- nrow(results_heatmap) > 1
+# convert result to wide format
+results_wide <- readRDS(rds_file) %>% 
+  get_results() %>% 
+  res_to_heat()
+
+
+check_haplo <- nrow(results_wide) > 1
 check_haplo
 
 #----------#
 # pheatmap
 png(out.plt, units = "in", res = 500, width = 19, height = 6) # for traits use width = 12
 
-pheatmap(results_heatmap[-1],
+pheatmap(results_wide[-1],
          #color = hcl.colors(50, "Blue-Red 2"),
-         #breaks = seq(-rg, rg, length.out = 100), #rg <- max(abs(results_heatmap[-1]))
+         #breaks = seq(-rg, rg, length.out = 100), #rg <- max(abs(results_wide[-1]))
          #color = myColor, 
          #breaks = myBreaks,
-         labels_row = results_heatmap$haplo,
+         labels_row = results_wide$haplo,
          #display_numbers = results_omics_pval[-1],
          number_color = "gold",
          cluster_cols = check_haplo,

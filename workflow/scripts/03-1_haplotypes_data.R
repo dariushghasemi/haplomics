@@ -18,7 +18,7 @@ if (!is.installed("config")){
 }
 
 #library(config)
-library(tidyverse)
+suppressMessages(library(tidyverse))
 
 config <- config::get(file = "../config/configuration.yml")
 
@@ -32,28 +32,24 @@ today.date <- format(Sys.Date(), "%d-%b-%y")
 #----------#
 # taking variants file as input
 args <- commandArgs(trailingOnly = TRUE)
-genotype_file <- args[1]
+dosage <- args[1]
 ophen <- args[2]
 ometa <- args[3]
 oprot <- args[4]
+orepo <- args[5]
 
+
+#----------#
 # data files imported from config file
 traits_blood   <- config$path_phen
 traits_metabol <- config$path_meta
 traits_protein <- config$path_prot
 principal_comp <- config$path_comp
 
-
-# taking the locus name
-locus_name  <- gsub("_dosage.txt", "", basename(genotype_file))
-locus_name
-
 #----------#
-# directories
-
-#out.phen.rds <- paste0(out.dir, locus_name, "_haplotypes_data_phen.RDS")
-#out.meta.rds <- paste0(out.dir, locus_name, "_haplotypes_data_meta.RDS")
-#out.prot.rds <- paste0(out.dir, locus_name, "_haplotypes_data_prot.RDS")
+# taking the locus name
+locus_name  <- gsub("_dosage.txt", "", basename(dosage))
+locus_name
 
 
 #-----------------------------------------------------#
@@ -93,15 +89,17 @@ cat("\nImport data...\n")
 
 # Genotype data
 genome <- read.delim(
-  genotype_file,
+  dosage,
   col.names  = c("AID", "chromosome", "position", "MARKER_ID", "REF", "ALT", "AF", "Dosage"),
   colClasses = c(rep("character", 6), rep("numeric", 2)),
-  #nrows = 125000
+  #nrows = 15500
 )
 
+#----------#
 # CHRIS metabolites; p = 175; n = 7,252
 # defining AID column as character to preserve 
 # the leading zero in participants identifier
+
 chrisMass <- read.csv(traits_metabol, colClass = c(AID = "character")) %>%
   # Excluding with missing rate > 10.2%
   select(- c(pc_aa_c30_2, met_so, pc_ae_c38_1))
@@ -169,7 +167,7 @@ to_merge_genome <- genome %>%
 
 str(to_merge_genome)
 dim(to_merge_genome)
-str(to_merge_genome[c("AID", "Age", "Sex")])
+#str(to_merge_genome[c("AID", "Age", "Sex")])
 
 #----------#
 cat("\nMerged clinical traits...\n")
@@ -203,6 +201,8 @@ merged_prot <- to_merge_genome %>%
 str(merged_prot %>% select(- starts_with("chr")))
 
 #----------#
+cat("\nSave output datasets...\n")
+
 # save the merged data
 write.csv(merged_phen, file = ophen, quote = F, row.names = F)
 write.csv(merged_meta, file = ometa, quote = F, row.names = F)
@@ -211,28 +211,55 @@ write.csv(merged_prot, file = oprot, quote = F, row.names = F)
 #saveRDS(merged_data, file = output.rds)
 
 #-----------------------------------------------#
+# retreive some statistics for the report
+
+cat("\nMake summary of datasets...\n")
+
+# type of imported data 
+assay1 <- str_split(config$datasets, " ", simplify = TRUE)[,1]
+assay2 <- str_split(config$datasets, " ", simplify = TRUE)[,2]
+assay3 <- str_split(config$datasets, " ", simplify = TRUE)[,3]
+
+# number of extracted variants, samples for each assay
+n_snps <- ncol(to_merge_genome %>% select(starts_with("chr")))
+n_var1 <- length(intersect(phenome,     colnames(merged_phen)))
+n_var2 <- length(intersect(metabolites, colnames(merged_meta)))
+n_var3 <- length(intersect(proteins,    colnames(merged_prot)))
+
+# number of samples for each assay
+nrow1 <- nrow(merged_phen)
+nrow2 <- nrow(merged_meta)
+nrow3 <- nrow(merged_prot)
+
+# reported data
+report <- data.frame(
+  "Dataset"       = c(assay1, assay2, assay3),
+  "N_traits"      = c(n_var1, n_var2, n_var3),
+  "N_variants"    = c(n_snps, n_snps, n_snps),
+  "N_individuals" = c(nrow1,  nrow2,  nrow3)
+)
+
+report
+
+# save report
+write.table(report, file = orepo, sep = "\t", quote = F, row.names = F)
+
+#----------#
 # Printing number of SNPs and traits
 message.data <- paste(
-  "Store", 
-  locus_name, 
-  "haplotypes data including dosage levels of",
-  ncol(to_merge_genome %>% select(starts_with("chr"))),
-  "variants and",
-  length(intersect(phenome, colnames(merged_phen))),
-  "clinical traits\nfor ", 
-  nrow(merged_phen),
-  "individuals and",
-  length(intersect(metabolites, colnames(merged_meta))),
-  "serum metabolites for", 
-  nrow(merged_meta),
-  "individuals and",
-  length(intersect(proteins, colnames(merged_prot))),
-  "plasma proteins (n =",
-  nrow(merged_prot),
-  ") individuals on: \n",
-  ophen)
+  "Store", locus_name, 
+  "haplotypes data including dosage levels of", n_snps,
+  "variants and", n_var1,
+  "clinical traits for ", nrow1,
+  "individuals and", n_var2,
+  "serum metabolites for", nrow2,
+  "individuals and", n_var3,
+  "plasma proteins (n =",  nrow3,
+  ") individuals on: \n", ophen
+  )
 
 cat("\n", message.data, "\n")
+
 
 #----------#
 # print time and date

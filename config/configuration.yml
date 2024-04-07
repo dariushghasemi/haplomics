@@ -1,7 +1,6 @@
 #values
-gene_set0: "SLC34A1 PDILT IGF1R"
-gene_set1: "CASZ1 DDX1 TMEM60 STC1 PIP5K1B"
-#gene_set1: "DAB2 GAB2"
+gene_set: "CASZ1 DDX1 TMEM60 STC1 GAB2 SLC34A1 IGF1R PDILT SHROOM3 PIP5K1B DAB2" 
+#gene_set: "PIP5K1B" #" GAB2"
 datasets: "phen meta prot"
 
 # pathes
@@ -16,3 +15,4 @@ default:
     path_prot: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_prot.csv"
     path_comp: "/home/dghasemisemeskandeh/projects/HaploReg/data/CHRIS13K.GT.evecs"
     phenotypes: ""
+    datasets: "phen meta prot"

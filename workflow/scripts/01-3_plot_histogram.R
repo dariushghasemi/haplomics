@@ -30,13 +30,19 @@ df_variants <- data.table::fread(variants_file, header = FALSE, sep = "\t", col.
 
 #------------------------#
 af_histo <- df_variants %>%
-  # making allele freq consistent for whole variant to have AF<0.5
-  mutate(AF_compl = if_else(AF <= 0.5, AF, 1 - AF)) %>%
+  mutate(AF_compl = if_else(AF <= 0.5, AF, 1 - AF)) %>% # making allele freq consistent for whole variant to have AF<0.5
   ggplot(aes(AF_compl)) +
-  #geom_hline(yintercept = c(5), lty = 2) +
-  geom_histogram(bins =50, color = "darkblue", fill = "skyblue") +
-  labs(x = paste("Allele Frequency of variants at", locus_name), y = "Number of Variants") +
-  theme_classic()
+  geom_histogram(bins = 50, color = NA, fill = "skyblue") +
+  labs(
+	x = paste0("Allele frequency of variants at *", locus_name, "*"),
+	y = "Number of instances"
+  ) +
+  theme_classic() +
+  theme(
+  axis.title = ggtext::element_markdown(size = 14, face = 2),
+  axis.text  = element_text(size = 14, face = 1)
+  )
+
 
 
 #------------------------#

@@ -80,7 +80,9 @@ change_haplo_name <- function(df) {
 extract_haplotypes <- function(df) {
   df %>%
   ungroup() %>%
-  select(trait_name, haplotype) %>% 
+  select(trait_name, haplotype) %>%
+  # take an example trait for visulization
+  slice_head(n = 1) %>%
   unnest(haplotype) %>%
   select(- hap.freq) %>%
   filter(Haplotype != "Hrare") %>%
