@@ -171,7 +171,7 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 
 - To check the app version, run `snakemake --version -> 7.32.4`
 
-- The haplotype building step took so long (>7 hours with 420 variants) compared to the rest of the loci. I had to narrow the window to the end of PIPKA1B gene to lower variants and haplotypes. In the end, the pipeline was implemented on the whole 11 loci and the results were integrated into the html report using Rmarkdown. These reports were saved into a `results/report_html` directory and the PI got informed. It is time to compose the manuscript of the pipeline (Sun, 17:05, 07-Apr-24).
+- The haplotype building step took so long (>7 hours with 420 variants) compared to the rest of the loci. To lower variants and haplotypes narrow the window from the right side to the end of PIPKA1B gene. In the end, the pipeline was implemented on the whole 11 loci and the results were integrated into the html report using Rmarkdown. These reports were saved into a `results/report_html` directory and the PI got informed. It is time to compose the manuscript of the pipeline (Sun, 17:05, 07-Apr-24).
 
 - The pipeline should be tested via the latest version of snakemake before the official release to make sure of the flixibility of the pipeline to dynamically deal with the errors pertaining the memory and RAM insufficiency and running time limitation (Sun, 17:05, 07-Apr-24). 
 
