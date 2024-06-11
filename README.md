@@ -175,4 +175,8 @@ sbatch --wrap 'Rscript 03-4_haplotypes_heatmap.R   output/result_associations/IG
 
 - The pipeline should be tested via the latest version of snakemake before the official release to make sure of the flixibility of the pipeline to dynamically deal with the errors pertaining the memory and RAM insufficiency and running time limitation (Sun, 17:05, 07-Apr-24). 
 
+- The RDS files were sorted by the trait names and haplotypes and saved in CSV format (Tue, 23:49, 11-Jun-24).
+
+- Working on supplementary materials to send the draft to PI in the following days (Tue, 23:50, 11-Jun-24).
+
 Dariush
