@@ -123,19 +123,36 @@ rule plot_gene:
 rule merge_data:
 	input:
 		script = "scripts/03-1_haplotypes_data.R",
-		dosage = "results/dosage/{locus}_dosage.txt"
+		dosage = "results/dosage/{locus}_dosage.txt",
+		phenotype=lambda wildcards: config["phenotype_files"][int(wildcards.phenotype_idx)],
 	output:
 		ophen = "results/pheno/{locus}/{locus}_phen_merged_data.csv",
 		ometa = "results/pheno/{locus}/{locus}_meta_merged_data.csv",
 		oprot = "results/pheno/{locus}/{locus}_prot_merged_data.csv",
 		summ  = "results/report/{locus}_merged_data_summary.txt"
-	params:
-		#assay = "{assay}"
+    params:
+        covariates_provided=True if config["covariates_file"] else False
 	log:
 		"logs/merge_data/{locus}_merged_data.log"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
 		mem_mb=get_mem_plt, disk_mb=20000
+	shell:
+        """
+        if [ {params.covariates_provided} = True ]; then
+            Rscript {input.script}
+				--vcf {input.dosage} \
+				--phenotype {input.phenotype}  \
+                --covariates {input.covariates} \
+				--output {output.ophen}
+        else
+            Rscript {input.script} \
+				--vcf {input.vcf} \
+				--phenotype {input.phenotype}  \
+                --output {output.model_results} \
+				--intercept_only
+        fi
+        """
 	shell:
 		"""
 		Rscript {input.script} {input.dosage} {output.ophen} {output.ometa} {output.oprot} {output.summ} 2> {log}
