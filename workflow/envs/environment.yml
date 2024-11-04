@@ -1,0 +1,13 @@
+name: haplOmics
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+  - R
+dependencies:
+  - r-base=4.3.3
+  - r-optparse=1.7.4
+  - r-tidyverse=2.0.0
+  - r-data.table=1.15.2
+  - r-R.utils=2.12.3
+  

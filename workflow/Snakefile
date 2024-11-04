@@ -50,6 +50,8 @@ rule get_locus:
 		vcf = config["path_vcf"]
 	output:
 		vcf = "results/genotype/{locus}.vcf.gz",
+	conda:
+        "../envs/fine_mapping.yml"
 	params:
 		LOCUS = "{locus}"
 	resources:
@@ -69,6 +71,8 @@ rule get_dosage:
 		dosage     = "results/dosage/{locus}_dosage.txt",
 		variants   = "results/annotation/{locus}_variants.list",
 		annotation = "results/annotation/{locus}_annotation.txt"
+	conda:
+        "../envs/fine_mapping.yml"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
 		mem_mb=get_mem_plt, disk_mb=5000
@@ -84,6 +88,8 @@ rule plot_histogram:
 		variants = "results/annotation/{locus}_variants.list"
 	output:
 		plot = "results/plot_histogram/{locus}_plot_histo.png"
+	conda:
+        "../envs/fine_mapping.yml"
 	params:
 		#variants
 	shell:
@@ -98,6 +104,8 @@ rule plot_annotation:
 		annotation = "results/annotation/{locus}_annotation.txt"
 	output:
 		plot = "results/plot_annotation/{locus}_plot_annotations.png"
+	conda:
+        "../envs/fine_mapping.yml"
 	params:
 		#annotation
 	shell:
@@ -112,6 +120,8 @@ rule plot_gene:
 		annotation = "results/annotation/{locus}_annotation.txt"
 	output:
 		plot = "results/plot_gene/{locus}_plot_gene.png"
+	conda:
+        "../envs/fine_mapping.yml"
 	params:
 		#annotation
 	shell:
@@ -130,7 +140,9 @@ rule merge_data:
 		ometa = "results/pheno/{locus}/{locus}_meta_merged_data.csv",
 		oprot = "results/pheno/{locus}/{locus}_prot_merged_data.csv",
 		summ  = "results/report/{locus}_merged_data_summary.txt"
-    params:
+    conda:
+        "../envs/fine_mapping.yml"
+	params:
         covariates_provided=True if config["covariates_file"] else False
 	log:
 		"logs/merge_data/{locus}_merged_data.log"
@@ -165,6 +177,8 @@ rule build_haplotypes:
 		data   = "results/pheno/{locus}/{locus}_{assay}_merged_data.csv"
 	output:
 		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS"
+	conda:
+        "../envs/fine_mapping.yml"
 	params:
 		#data
 	log:
@@ -187,6 +201,8 @@ rule plot_haplotypes:
 	output:
 		plt1 = "results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes.png",
 		plt2 = "results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes_shrinked.png"
+	conda:
+        "../envs/fine_mapping.yml"
 	params:
 		#result
 	log:
@@ -208,6 +224,8 @@ rule plot_heatmap:
 		plt = "results/plot_heatmaps/{locus}/{locus}_{assay}_plot_heatmap.png",
 		tbl = "results/result_signif/{locus}/{locus}_{assay}_association_results_signif.csv",
 		rds = "results/result_tidied/{locus}/{locus}_{assay}_association_results_tidied.RDS"
+	conda:
+        "../envs/fine_mapping.yml"
 	params:
 		#result
 	log:
