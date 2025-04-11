@@ -1,16 +1,24 @@
 
-import os
-from os.path import join as pjoin
+# import required libraries
+from snakemake.utils import min_version
 
-#------------------------#
-configfile: "../config/configuration.yml"
+##### set minimum snakemake version #####
+min_version("8.4.1")
 
-# inputs
-loci  = config["gene_set"].split()
-assay = config["datasets"].split()
-
+# read the configuration file
+configfile: "config/configuration.yml"
 #------------------------#
 
+# Read configuration from user input
+DATA_FILES = config["phenotype_files"].split(",")
+
+include: "rules/common.smk"
+
+# Get loci and data types from the input file
+LOCI = parse_loci(config["path_loci"])
+PHENO_PATHS = parse_phenotype(config["phenotype_files"]) # Get phenotype file paths
+
+#------------------------#
 from datetime import date
 
 today = date.today()
@@ -32,6 +40,9 @@ def higher_time(wildcards, attempt):
 # a pseudo-rule that collects the target files
 rule all:
 	input:
+		expand("results/genotype/{locus}.vcf.gz", locus = analytes.locus),
+		expand("results/dosage/{locus}.dosage", locus = analytes.locus),
+		expand("results/merged_data/{locus}_{dataset}_merged_data.RDS", dataset=df.data_type, locus = analytes.locus)
 		expand("results/plot_histogram/{locus}_plot_histo.png", locus = loci),
 		expand("results/plot_annotation/{locus}_plot_annotations.png", locus = loci),
 		expand("results/plot_gene/{locus}_plot_gene.png", locus = loci),
@@ -42,43 +53,55 @@ rule all:
 		#expand("results/report_html/{locus}_report.html", locus = loci)
 
 #------------------------#
-
 rule get_locus:
 	input:
-		script = "scripts/01-1_subsetting_vcf.sh",
-		position = config["path_loci"],
-		vcf = config["path_vcf"]
+		vcf = config["path_vcf"],
 	output:
-		vcf = "results/genotype/{locus}.vcf.gz",
+		ofile = "results/genotype/{locus}.vcf.gz",
 	conda:
-        "../envs/fine_mapping.yml"
+		"envs/environment.yml"
 	params:
-		LOCUS = "{locus}"
+		region = lambda wildcards: get_region(wildcards.locus),
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
 		mem_mb=get_mem_plt, disk_mb=5000
 	shell:
 		"""
-		bash {input.script} {input.position} {params.LOCUS} {input.vcf} {output.vcf}
+		echo "Region: {params.region}"
+		
+		# Check if the file exists and is readable
+		if [ ! -f {input.vcf} ] || [ ! -r {input.vcf} ]; then
+			echo "The file does not exist or cannot be read."
+			exit 2
+		# Check if the file is empty
+		elif [ ! -s {input.vcf} ]; then
+			echo "The file is empty."
+			exit 3
+		else
+			echo "VCF must be compressed."
+			bcftools view {input.vcf} -r {params.region} -Oz -o {output.ofile}
+			bcftools index {output.ofile}
+		fi
 		"""
 #------------------------#
 
 rule get_dosage:
 	input:
-		script = "scripts/01-2_extracting_dosage.sh",
+		script = "workflow/scripts/01-2_extracting_dosage.sh",
 		vcf    = "results/genotype/{locus}.vcf.gz"
 	output:
-		dosage     = "results/dosage/{locus}_dosage.txt",
-		variants   = "results/annotation/{locus}_variants.list",
-		annotation = "results/annotation/{locus}_annotation.txt"
+		dosage     = "results/dosage/{locus}.dosage",
+		#variants   = "results/annotation/{locus}_variants.list",
+		#annotation = "results/annotation/{locus}_annotation.txt"
 	conda:
-        "../envs/fine_mapping.yml"
+		"envs/environment.yml"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
 		mem_mb=get_mem_plt, disk_mb=5000
 	shell:
 		"""
-		bash {input.script} {input.vcf} {output.dosage} {output.variants} {output.annotation}
+		# extract variants in the region after merging
+		bcftools query -f '[%SAMPLE\t%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\t%DS\n]' {input.vcf} -o {output.dosage}
 		"""
 #------------------------#
 
@@ -89,9 +112,7 @@ rule plot_histogram:
 	output:
 		plot = "results/plot_histogram/{locus}_plot_histo.png"
 	conda:
-        "../envs/fine_mapping.yml"
-	params:
-		#variants
+		"../envs/environment.yml"
 	shell:
 		"""
 		Rscript {input.script} {input.variants} {output.plot}
@@ -105,7 +126,7 @@ rule plot_annotation:
 	output:
 		plot = "results/plot_annotation/{locus}_plot_annotations.png"
 	conda:
-        "../envs/fine_mapping.yml"
+		"../envs/environment.yml"
 	params:
 		#annotation
 	shell:
@@ -121,7 +142,7 @@ rule plot_gene:
 	output:
 		plot = "results/plot_gene/{locus}_plot_gene.png"
 	conda:
-        "../envs/fine_mapping.yml"
+		"../envs/environment.yml"
 	params:
 		#annotation
 	shell:
@@ -132,53 +153,48 @@ rule plot_gene:
 
 rule merge_data:
 	input:
-		script = "scripts/03-1_haplotypes_data.R",
-		dosage = "results/dosage/{locus}_dosage.txt",
-		phenotype=lambda wildcards: config["phenotype_files"][int(wildcards.phenotype_idx)],
+		script = "workflow/scripts/03-1_haplotypes_data.R",
+		dosage = "results/dosage/{locus}.dosage",
+		phenotype = lambda wildcards:  get_pheno(wildcards.dataset),
 	output:
-		ophen = "results/pheno/{locus}/{locus}_phen_merged_data.csv",
-		ometa = "results/pheno/{locus}/{locus}_meta_merged_data.csv",
-		oprot = "results/pheno/{locus}/{locus}_prot_merged_data.csv",
-		summ  = "results/report/{locus}_merged_data_summary.txt"
-    conda:
-        "../envs/fine_mapping.yml"
+		odata = "results/merged_data/{locus}_{dataset}_merged_data.RDS"
+		#summ  = "results/report/{locus}_merged_data_summary.txt"
+	conda:
+		"envs/environment.yml"
 	params:
-        covariates_provided=True if config["covariates_file"] else False
+		covariates=config["covariates_file"],
+		covariates_provided=True #if config["covariates_file"] else False
 	log:
-		"logs/merge_data/{locus}_merged_data.log"
+		"logs/merged_data/{locus}_{dataset}_merged_data.log"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
 		mem_mb=get_mem_plt, disk_mb=20000
 	shell:
-        """
-        if [ {params.covariates_provided} = True ]; then
-            Rscript {input.script}
-				--vcf {input.dosage} \
-				--phenotype {input.phenotype}  \
-                --covariates {input.covariates} \
-				--output {output.ophen}
-        else
-            Rscript {input.script} \
-				--vcf {input.vcf} \
-				--phenotype {input.phenotype}  \
-                --output {output.model_results} \
-				--intercept_only
-        fi
-        """
-	shell:
 		"""
-		Rscript {input.script} {input.dosage} {output.ophen} {output.ometa} {output.oprot} {output.summ} 2> {log}
+		if [ {params.covariates_provided} = True ]; then
+			Rscript {input.script} \
+				--dosage {input.dosage} \
+				--phenotype {input.phenotype}  \
+                --covariate {params.covariates} \
+				--output {output.odata}
+		else
+			Rscript {input.script} \
+				--dosage {input.dosage} \
+				--phenotype {input.phenotype}  \
+                --output {output.odata} \
+				--intercept_only
+		fi
 		"""
 #------------------------#
 
 rule build_haplotypes:
 	input:
-		script = "scripts/03-2_haplotypes_building.R",
+		script = "workflow/scripts/03-2_haplotypes_building.R",
 		data   = "results/pheno/{locus}/{locus}_{assay}_merged_data.csv"
 	output:
 		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS"
 	conda:
-        "../envs/fine_mapping.yml"
+		"../envs/environment.yml"
 	params:
 		#data
 	log:
@@ -194,7 +210,7 @@ rule build_haplotypes:
 
 rule plot_haplotypes:
 	input:
-		script = "scripts/03-3_haplotypes_plot.R",
+		script = "workflow/scripts/03-3_haplotypes_plot.R",
 		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS",
 		annotation = "results/annotation/{locus}_annotation.txt",
 		variants = "results/annotation/{locus}_variants.list"
@@ -202,7 +218,7 @@ rule plot_haplotypes:
 		plt1 = "results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes.png",
 		plt2 = "results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes_shrinked.png"
 	conda:
-        "../envs/fine_mapping.yml"
+		"../envs/environment.yml"
 	params:
 		#result
 	log:
@@ -218,14 +234,14 @@ rule plot_haplotypes:
 
 rule plot_heatmap:
 	input:
-		script = "scripts/03-4_haplotypes_heatmap.R",
+		script = "workflow/scripts/03-4_haplotypes_heatmap.R",
 		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS"
 	output:
 		plt = "results/plot_heatmaps/{locus}/{locus}_{assay}_plot_heatmap.png",
 		tbl = "results/result_signif/{locus}/{locus}_{assay}_association_results_signif.csv",
 		rds = "results/result_tidied/{locus}/{locus}_{assay}_association_results_tidied.RDS"
 	conda:
-        "../envs/fine_mapping.yml"
+		"../envs/environment.yml"
 	params:
 		#result
 	log:
