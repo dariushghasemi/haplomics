@@ -1,18 +1,21 @@
-#values
-gene_set: "CASZ1 DDX1 TMEM60 STC1 GAB2 SLC34A1 IGF1R PDILT SHROOM3 PIP5K1B DAB2" 
-#gene_set: "PIP5K1B" #" GAB2"
-datasets: "phen meta prot"
+datasets: "phen,soma"
 
 # pathes
-path_loci: "../config/locus_window.txt"
-path_vcf: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/WES/CHRIS13K.WES.imputed.rsq03.vep.hg38.sorted.bgzip.vcf.gz"
-path_rep: "/home/dghasemisemeskandeh/projects/haploAnalysis/workflow"
+path_loci: "config/locus_window_test.txt"
+path_vcf: "/scratch/dariush.ghasemi/projects/haploAnalysis/data/post_imputation_Martiniano_et_al_2017_public.vcf.gz"
+path_rep: "/scratch/dariush.ghasemi/projects/haploAnalysis/workflow"
+phenotype_files: "data/my_phenos.tsv,  data/my_soma.tsv"
+covariates_file: "data/my_covars.tsv"
 
 # for R (03-1.R)
 default:
     path_phen: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_q-norm.csv"
     path_meta: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_meta.csv"
     path_prot: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_prot.csv"
-    path_comp: "/home/dghasemisemeskandeh/projects/HaploReg/data/CHRIS13K.GT.evecs"
+    path_comp: ""
     phenotypes: ""
-    datasets: "phen meta prot"
+    datasets: "phen soma"
+
+
+#phenotype_files: "data/chris_q-norm.csv, data/chris_meta.csv,  data/chris_prot.csv"
+#covariates_file: "data/CHRIS13K.GT.evecs"
