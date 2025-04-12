@@ -5,15 +5,15 @@ Haplotype analysis pipeline for genetic loci in population studies with multi-om
 ### Functionality
 
 Haplomics pipeline performs these tasks automatically on each input region:
-Step 1: extracting dosage for variants within the defined region from the VCF
-Step 2: annotate variants using VEP API
-Step 3: depicting allele count/frequencies of the variants
-Step 4: depicting annotated consequences of the variants
-Step 5: merging extracted genotypes with phenotypes
-Step 6: building haplotypes and test their association with the phenotypes
-Step 7: representing the haplotypes (full and varied variants)
-Step 8: visualizing association results via heatmap plot
-Step 9: reporting the results in PDF or HTML
+1. extracting dosage for variants within the defined region from the VCF
+2. annotate variants using VEP API
+3. depicting allele count/frequencies of the variants
+4. depicting annotated consequences of the variants
+5. merging extracted genotypes with phenotypes
+6. building haplotypes and test their association with the phenotypes
+7. representing the haplotypes (full and varied variants)
+8. visualizing association results via heatmap plot
+9. reporting the results in PDF or HTML
 
 
 ### Input files
