@@ -10,13 +10,13 @@ configfile: "config/configuration.yml"
 #------------------------#
 
 # Read configuration from user input
-DATA_FILES = config["phenotype_files"].split(",")
+#DATA_FILES = config["phenotype_files"].split(",")
 
 include: "rules/common.smk"
 
 # Get loci and data types from the input file
-LOCI = parse_loci(config["path_loci"])
-PHENO_PATHS = parse_phenotype(config["phenotype_files"]) # Get phenotype file paths
+#LOCI = parse_loci(config["path_loci"])
+#PHENO_PATHS = parse_phenotype(config["phenotype_files"]) # Get phenotype file paths
 
 #------------------------#
 from datetime import date
@@ -42,219 +42,23 @@ rule all:
 	input:
 		expand("results/genotype/{locus}.vcf.gz", locus = analytes.locus),
 		expand("results/dosage/{locus}.dosage", locus = analytes.locus),
-		expand("results/merged_data/{locus}_{dataset}_merged_data.RDS", dataset=df.data_type, locus = analytes.locus)
+		expand("results/merged_data/{locus}_{dataset}_merged_data.RDS", locus = analytes.locus, dataset = df.data_type),
 		expand("results/plot_histogram/{locus}_plot_histo.png", locus = loci),
 		expand("results/plot_annotation/{locus}_plot_annotations.png", locus = loci),
 		expand("results/plot_gene/{locus}_plot_gene.png", locus = loci),
 		expand("results/report/{locus}_merged_data_summary.txt", locus = loci),
-		expand("results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes.png", locus = loci, assay = assay),
-		expand("results/plot_heatmaps/{locus}/{locus}_{assay}_plot_heatmap.png", locus = loci, assay = assay),
-		expand("results/result_tidied/{locus}/{locus}_{assay}_association_results_tidied.RDS", locus = loci, assay = assay),
+		expand("results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png", locus = analytes.locus, dataset = df.data_type),
+		expand("results/plot_heatmaps/{locus}_{dataset}_plot_heatmap.png", locus = analytes.locus, dataset=df.data_type),
+		expand("results/result_tidied/{locus}_{dataset}_association_results_tidied.RDS", locus = analytes.locus, dataset=df.data_type),
 		#expand("results/report_html/{locus}_report.html", locus = loci)
 
-#------------------------#
-rule get_locus:
-	input:
-		vcf = config["path_vcf"],
-	output:
-		ofile = "results/genotype/{locus}.vcf.gz",
-	conda:
-		"envs/environment.yml"
-	params:
-		region = lambda wildcards: get_region(wildcards.locus),
-	resources:
-		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=5000
-	shell:
-		"""
-		echo "Region: {params.region}"
-		
-		# Check if the file exists and is readable
-		if [ ! -f {input.vcf} ] || [ ! -r {input.vcf} ]; then
-			echo "The file does not exist or cannot be read."
-			exit 2
-		# Check if the file is empty
-		elif [ ! -s {input.vcf} ]; then
-			echo "The file is empty."
-			exit 3
-		else
-			echo "VCF must be compressed."
-			bcftools view {input.vcf} -r {params.region} -Oz -o {output.ofile}
-			bcftools index {output.ofile}
-		fi
-		"""
-#------------------------#
 
-rule get_dosage:
-	input:
-		script = "workflow/scripts/01-2_extracting_dosage.sh",
-		vcf    = "results/genotype/{locus}.vcf.gz"
-	output:
-		dosage     = "results/dosage/{locus}.dosage",
-		#variants   = "results/annotation/{locus}_variants.list",
-		#annotation = "results/annotation/{locus}_annotation.txt"
-	conda:
-		"envs/environment.yml"
-	resources:
-		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=5000
-	shell:
-		"""
-		# extract variants in the region after merging
-		bcftools query -f '[%SAMPLE\t%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\t%DS\n]' {input.vcf} -o {output.dosage}
-		"""
-#------------------------#
-
-rule plot_histogram:
-	input:
-		script   = "scripts/01-3_plot_histogram.R",
-		variants = "results/annotation/{locus}_variants.list"
-	output:
-		plot = "results/plot_histogram/{locus}_plot_histo.png"
-	conda:
-		"../envs/environment.yml"
-	shell:
-		"""
-		Rscript {input.script} {input.variants} {output.plot}
-		"""
-#------------------------#
-
-rule plot_annotation:
-	input:
-		script = "scripts/01-4_plot_annotation.R",
-		annotation = "results/annotation/{locus}_annotation.txt"
-	output:
-		plot = "results/plot_annotation/{locus}_plot_annotations.png"
-	conda:
-		"../envs/environment.yml"
-	params:
-		#annotation
-	shell:
-		"""
-		Rscript {input.script} {input.annotation} {output.plot}
-		"""
-#------------------------#
-
-rule plot_gene:
-	input:
-		script = "scripts/01-5_plot_genes.R",
-		annotation = "results/annotation/{locus}_annotation.txt"
-	output:
-		plot = "results/plot_gene/{locus}_plot_gene.png"
-	conda:
-		"../envs/environment.yml"
-	params:
-		#annotation
-	shell:
-		"""
-		Rscript {input.script} {input.annotation} {output.plot}
-		"""
-#------------------------#
-
-rule merge_data:
-	input:
-		script = "workflow/scripts/03-1_haplotypes_data.R",
-		dosage = "results/dosage/{locus}.dosage",
-		phenotype = lambda wildcards:  get_pheno(wildcards.dataset),
-	output:
-		odata = "results/merged_data/{locus}_{dataset}_merged_data.RDS"
-		#summ  = "results/report/{locus}_merged_data_summary.txt"
-	conda:
-		"envs/environment.yml"
-	params:
-		covariates=config["covariates_file"],
-		covariates_provided=True #if config["covariates_file"] else False
-	log:
-		"logs/merged_data/{locus}_{dataset}_merged_data.log"
-	resources:
-		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=20000
-	shell:
-		"""
-		if [ {params.covariates_provided} = True ]; then
-			Rscript {input.script} \
-				--dosage {input.dosage} \
-				--phenotype {input.phenotype}  \
-                --covariate {params.covariates} \
-				--output {output.odata}
-		else
-			Rscript {input.script} \
-				--dosage {input.dosage} \
-				--phenotype {input.phenotype}  \
-                --output {output.odata} \
-				--intercept_only
-		fi
-		"""
-#------------------------#
-
-rule build_haplotypes:
-	input:
-		script = "workflow/scripts/03-2_haplotypes_building.R",
-		data   = "results/pheno/{locus}/{locus}_{assay}_merged_data.csv"
-	output:
-		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS"
-	conda:
-		"../envs/environment.yml"
-	params:
-		#data
-	log:
-		"logs/build_haplotypes/{locus}/{locus}_{assay}.log"
-	resources:
-		runtime=lambda wc, attempt: attempt * 6000,
-		mem_mb=get_mem_mb
-	shell:
-		"""
-		Rscript {input.script} {input.data} {output.result} 2> {log}
-		"""
-#------------------------#
-
-rule plot_haplotypes:
-	input:
-		script = "workflow/scripts/03-3_haplotypes_plot.R",
-		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS",
-		annotation = "results/annotation/{locus}_annotation.txt",
-		variants = "results/annotation/{locus}_variants.list"
-	output:
-		plt1 = "results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes.png",
-		plt2 = "results/plot_haplotypes/{locus}/{locus}_{assay}_plot_haplotypes_shrinked.png"
-	conda:
-		"../envs/environment.yml"
-	params:
-		#result
-	log:
-		"logs/plot_haplotypes/{locus}/{locus}_{assay}.log"
-	resources:
-		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=20000
-	shell:
-		"""
-		Rscript {input.script} {input.result} {input.annotation} {input.variants} {output.plt1} {output.plt2} 2> {log}
-		"""
-#------------------------#
-
-rule plot_heatmap:
-	input:
-		script = "workflow/scripts/03-4_haplotypes_heatmap.R",
-		result = "results/result_associations/{locus}/{locus}_{assay}_association_results.RDS"
-	output:
-		plt = "results/plot_heatmaps/{locus}/{locus}_{assay}_plot_heatmap.png",
-		tbl = "results/result_signif/{locus}/{locus}_{assay}_association_results_signif.csv",
-		rds = "results/result_tidied/{locus}/{locus}_{assay}_association_results_tidied.RDS"
-	conda:
-		"../envs/environment.yml"
-	params:
-		#result
-	log:
-		"logs/plot_heatmaps/{locus}/{locus}_{assay}.log"
-	resources:
-		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=32000
-	shell:
-		"""
-		Rscript {input.script} {input.result} {output.plt} {output.tbl} {output.rds} 2> {log}
-		"""
-
-#------------------------#
-#ruleorder: get_locus > get_dosage > plot_histogram > plot_annotation > plot_genes > merge_data > build_haplotypes > plot_haplotypes > plot_heatmap
-#------------------------#
-
+include: "rules/get_locus.smk"
+include: "rules/get_dosage.smk"
+include: "rules/plot_histogram.smk"
+include: "rules/plot_annotation.smk"
+include: "rules/plot_gene.smk"
+include: "rules/merge_data.smk"
+include: "rules/build_haplotype.smk"
+include: "rules/plot_haplotype.smk"
+include: "rules/plot_association.smk"
