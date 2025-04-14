@@ -2,23 +2,7 @@
 
 
 # The script was created on 12 December 2023
-# to automate haplotype reconstruction analysis
-# for all of the 11 replicated kidney loci.
-
-#----------#
-# load configuration file
-config <- config::get(file = "../config/configuration.yml")
-
-#----------#
-
-is.installed <- function(package_name){
-    is.element(package_name, installed.packages()[,1])
-}
-
-# check if package "Haplo.stats" is installed
-if (!is.installed("haplo.stats")){
-   install.packages("haplo.stats");
-}
+# to automate haplotype reconstruction analysis.
 
 # load libraries
 suppressMessages(library(tidyverse, quietly = TRUE))
@@ -36,14 +20,6 @@ today.date <- format(Sys.Date(), "%d-%b-%y")
 args <- commandArgs(trailingOnly = TRUE)
 pheno.geno <- args[1]
 out.assoc  <- args[2]
-
-# taking the locus name
-locus_name  <- gsub("_haplotypes_data_\\w+.csv", "", basename(pheno.geno))
-locus_name
-
-# type of dataset
-data_source <- gsub("(\\w+|\\d)_haplotypes_data_|.csv", "", basename(pheno.geno))
-data_source
 
 
 #-----------------------------------------------------#
@@ -63,20 +39,8 @@ do_INT = function(values) {
 cat("\nImport data...\n")
 
 # Phenotype data merged with genotypes
-merged_data <- read.csv(pheno.geno, header = TRUE, stringsAsFactors = FALSE)
+merged_data <- readRDS(pheno.geno)
 
-# for test run
-#merged_data <- merged_data %>% select(AID, Sex, Age, putrescine, glu, pc_ae_c30_0, PC1:PC10, starts_with("chr"))
-#merged_data <- merged_data %>% select(AID, Sex, Age, APOC1_P02654, C1QB_P02746, F12_P00748, PC1:PC10, starts_with("chr"))
-#merged_data <- merged_data %>% select(
-#  AID, Sex, Age, 
-#  any_of(c("PTT", "eGFRw",
-#  "putrescine", "glu", "pc_ae_c30_0",
-#  "APOC1_P02654", "C1QB_P02746", "F12_P00748")),
-#  PC1:PC10,
-#  starts_with("chr"))
-
-# "HDL", "BMI", "TSH", 
 
 #-----------------------------------------------------#
 #-------            Haplotype data           ---------
@@ -85,11 +49,11 @@ merged_data <- read.csv(pheno.geno, header = TRUE, stringsAsFactors = FALSE)
 cat("\nBuilding data...\n")
 
 # S1: selecting the variants
-loci <- merged_data %>% select(starts_with("chr"))
+loci <- merged_data %>% dplyr::select(starts_with("chr"))
 
 #----------#
 # Number of variants
-cat("\n", ncol(loci), "SNPs used for building haplotypes at", locus_name, "locus.", "\n")
+cat("\n", ncol(loci), "SNPs used for building haplotypes at this locus.", "\n")
 #----------#
 
 # S2: convert the dosage to integer, then to major(1/2) or minor(1/2) alleles
@@ -99,15 +63,8 @@ genome_binary  <- geno1to2(round(loci, 0), locus.label = colnames(loci))
 haplo_genotype <- setupGeno(genome_binary, miss.val = c(0, NA), locus.label = colnames(loci))
 
 # S4: GLM data (merging phenotype and genotype data)
-haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-AID, -starts_with("chr")))
+haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-IID, -starts_with("chr")))
 
-#merged_data %>% select(TSH, eGFRw, HDL, APTT, BMI, Age, Sex, PC1:PC10))
-#(APTT,AST_GOT,Cortisol,DBP,SBP,Pulse_Rate,eGFRw, Age, Sex, PC1:PC10)) #
-
-#----------#
-
-dim(haplo_dataset)
-#str(haplo_dataset)
 
 
 #-----------------------------------------------------#
@@ -116,7 +73,6 @@ dim(haplo_dataset)
 
 # Fitting regression model
 # glm fit with haplotypes, additive gender covariate on gaussian response
-#----------#
 
 # Defining Haplo.GLM model for iteration via map function
 hap_model <- function(df){
@@ -213,5 +169,3 @@ saveRDS(results_shrinked, out.assoc)
 #----------#
 # print time and date
 Sys.time()
-
-#sbatch --wrap 'Rscript 03-2_haplotypes_building.R data/pheno/IGF1R_haplotypes_data.csv' -c 2 --mem-per-cpu=32GB -J "03-2_IGF1R.R"
