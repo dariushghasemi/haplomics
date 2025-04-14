@@ -42,6 +42,9 @@ rule all:
 	input:
 		expand("results/genotype/{locus}.vcf.gz", locus = analytes.locus),
 		expand("results/dosage/{locus}.dosage", locus = analytes.locus),
+		expand("results/annotation/{locus}.snps", locus = analytes.locus),
+		expand("results/annotation/{locus}_summary.tsv", locus = analytes.locus),
+		expand("results/annotation/{locus}_output.json", locus = analytes.locus),
 		expand("results/merged_data/{locus}_{dataset}_merged_data.RDS", locus = analytes.locus, dataset = df.data_type),
 		expand("results/plot_histogram/{locus}_plot_histo.png", locus = loci),
 		expand("results/plot_annotation/{locus}_plot_annotations.png", locus = loci),
@@ -55,6 +58,7 @@ rule all:
 
 include: "rules/get_locus.smk"
 include: "rules/get_dosage.smk"
+include: "rules/annotate_variants.smk"
 include: "rules/plot_histogram.smk"
 include: "rules/plot_annotation.smk"
 include: "rules/plot_gene.smk"
