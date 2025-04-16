@@ -30,3 +30,7 @@ You can run the workflow on your local machine with cluster computing nodes usin
 ```bash
 sbatch submit.sh
 ```
+
+### Haplomics workflow example
+
+<img src="dag.svg" alt="example workflow">
