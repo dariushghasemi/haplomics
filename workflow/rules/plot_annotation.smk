@@ -1,15 +1,15 @@
 
 rule plot_annotation:
 	input:
-		script = "scripts/01-4_plot_annotation.R",
-		annotation = "results/annotation/{locus}_annotation.txt"
+		script = "workflow/scripts/01-6_plot_gennotation.R",
+		annotation = "results/annotation/{locus}_summary.tsv"
 	output:
-		plot = "results/plot_annotation/{locus}_plot_annotations.png"
+		plot = "results/plot_annotation/{locus}.png"
 	conda:
 		"../envs/environment.yml"
 	params:
-		#annotation
+		region = "{locus}"
 	shell:
 		"""
-		Rscript {input.script} {input.annotation} {output.plot}
+		Rscript {input.script} --annotation {input.annotation} --locus {params.region} --output {output.plot}
 		"""
