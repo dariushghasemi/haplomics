@@ -1,8 +1,9 @@
 
 rule annotate_variants:
 	input:
-		vep_api = "workflow/scripts/06-2-1_vep_annotator.py",
+		vep_api = "workflow/scripts/01-6_vep_annotator.py",
 		snps    = "results/annotation/{locus}.snps",
+		dosage = "results/dosage/{locus}.dosage",
 	output:
 		annotation = "results/annotation/{locus}_summary.tsv",
 		json       = "results/annotation/{locus}_output.json"

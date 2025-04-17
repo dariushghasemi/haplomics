@@ -40,28 +40,29 @@ def higher_time(wildcards, attempt):
 # a pseudo-rule that collects the target files
 rule all:
 	input:
-		expand("results/genotype/{locus}.vcf.gz", locus = analytes.locus),
-		expand("results/dosage/{locus}.dosage", locus = analytes.locus),
-		expand("results/annotation/{locus}.snps", locus = analytes.locus),
-		expand("results/annotation/{locus}_summary.tsv", locus = analytes.locus),
-		expand("results/annotation/{locus}_output.json", locus = analytes.locus),
-		expand("results/merged_data/{locus}_{dataset}_merged_data.RDS", locus = analytes.locus, dataset = df.data_type),
-		expand("results/plot_histogram/{locus}_plot_histo.png", locus = loci),
-		expand("results/plot_annotation/{locus}_plot_annotations.png", locus = loci),
-		expand("results/plot_gene/{locus}_plot_gene.png", locus = loci),
-		expand("results/report/{locus}_merged_data_summary.txt", locus = loci),
+		#expand("results/genotype/{locus}.vcf.gz", locus = analytes.locus),
+		#expand("results/dosage/{locus}.dosage", locus = analytes.locus),
+		#expand("results/annotation/{locus}.snps", locus = analytes.locus),
+		#expand("results/annotation/{locus}_summary.tsv", locus = analytes.locus),
+		#expand("results/annotation/{locus}_output.json", locus = analytes.locus),
+		expand("results/plot_annotation/{locus}.png", locus = analytes.locus),
+		#expand("results/merged_data/{locus}_{dataset}_merged_data.RDS", locus = analytes.locus, dataset = df.data_type),
+		#expand("results/plot_histogram/{locus}_plot_histo.png", locus = loci),
+		#expand("results/plot_gene/{locus}_plot_gene.png", locus = loci),
+		#expand("results/report/{locus}_merged_data_summary.txt", locus = loci),
+		#expand("results/result_associations/{locus}_{dataset}_association_results.RDS", locus = analytes.locus, dataset=df.data_type),
 		expand("results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png", locus = analytes.locus, dataset = df.data_type),
 		expand("results/plot_heatmaps/{locus}_{dataset}_plot_heatmap.png", locus = analytes.locus, dataset=df.data_type),
-		expand("results/result_tidied/{locus}_{dataset}_association_results_tidied.RDS", locus = analytes.locus, dataset=df.data_type),
+		#expand("results/result_tidied/{locus}_{dataset}_association_results_tidied.RDS", locus = analytes.locus, dataset=df.data_type),
 		#expand("results/report_html/{locus}_report.html", locus = loci)
 
 
 include: "rules/get_locus.smk"
 include: "rules/get_dosage.smk"
 include: "rules/annotate_variants.smk"
-include: "rules/plot_histogram.smk"
+#include: "rules/plot_histogram.smk"
 include: "rules/plot_annotation.smk"
-include: "rules/plot_gene.smk"
+#include: "rules/plot_gene.smk"
 include: "rules/merge_data.smk"
 include: "rules/build_haplotype.smk"
 include: "rules/plot_haplotype.smk"

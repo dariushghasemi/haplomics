@@ -76,8 +76,8 @@ df = (
     .set_index("data_type", drop=False)
     .sort_index() )
 
-print(df)
-print(analytes)
+#print(df)
+#print(analytes)
 
 def get_pheno(wildcards):
     return str(Path(df.loc[wildcards, "data_path"]))
