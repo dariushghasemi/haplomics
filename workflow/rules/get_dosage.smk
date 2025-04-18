@@ -5,8 +5,8 @@ rule get_dosage:
 		vcf    = "results/genotype/{locus}.vcf.gz"
 	output:
 		dosage = "results/dosage/{locus}.dosage",
-		snps   = "results/annotation/{locus}.snps",
-		#annotation = "results/annotation/{locus}_annotation.txt"
+		snps   = "results/dosage/{locus}.snps",
+		bim    = "results/dosage/{locus}.bim"
 	conda:
 		"../envs/environment.yml"
 	resources:
@@ -17,4 +17,5 @@ rule get_dosage:
 		# extract variants in the region after merging
 		bcftools query -f '[%SAMPLE\t%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\t%DS\n]' {input.vcf} -o {output.dosage}
 		bcftools query -f '%CHROM:%POS:%REF:%ALT\n' {input.vcf} -o {output.snps}
+		bcftools query -f '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%AF\n' {input.vcf} -o {output.bim}
 		"""

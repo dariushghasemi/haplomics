@@ -2,7 +2,7 @@ datasets: "phen,soma"
 
 # pathes
 path_loci: "config/locus_window_test.txt"
-path_vcf: "/scratch/dariush.ghasemi/projects/haploAnalysis/data/post_imputation_Martiniano_et_al_2017_public.vcf.gz"
+path_vcf: "/scratch/dariush.ghasemi/projects/haploAnalysis/data/chr22_no_indels_freq.vcf.gz"
 path_rep: "/scratch/dariush.ghasemi/projects/haploAnalysis/workflow"
 phenotype_files: "data/my_phenos.tsv,  data/my_soma.tsv"
 covariates_file: "data/my_covars.tsv"
