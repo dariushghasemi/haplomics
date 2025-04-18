@@ -1,56 +1,42 @@
-#!/usr/bin/Rscript
 
-
-# The script was created on 14 December 2023
-# to automate visualizing reconstructed haplotypes
-# for all of the 11 replicated kidney loci
-# in two versions: full and shrinked haplotypes.
-
-#----------#
-
+suppressMessages(library(optparse))
 suppressMessages(library(tidyverse))
+suppressMessages(library(data.table))
 
-#----------#
-# print time and date
-Sys.time()
+# Get arguments specified in the sbatch
+option_list <- list(
+  make_option("--rds", default=NULL, help="Path and filename of master coloc table produced by individual traits pre-processing"),
+  make_option("--annotation", default=NULL, help="Path to annotation file"),
+  make_option("--variants", default=NULL, help="Path to variants list"),
+  make_option("--locus", default=20, help="Region name"),
+  make_option("--output1", default=NULL, help="Filename of full haplotype plot"),
+  make_option("--output2", default=NULL, help="Filename of shrinked haplotype plot")
+);
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
 
-# date
-today.date <- format(Sys.Date(), "%d-%b-%y")
 
-#----------#
 # taking variants file as input
 args <- commandArgs(trailingOnly = TRUE)
-rds_file <- args[1]
-vep_file <- args[2]
-snp_file <- args[3]
-out.plt1 <- args[4]
-out.plt2 <- args[5]
 
-# taking locus name
-locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_\\w+_association_results_.+.RDS", "", basename(rds_file))
-#locus_name  <- gsub("\\d{2}-\\w{3}-\\d{2}_|_haplotypes_association.RDS", "", basename(rds_file))
-locus_name
+# store region name
+locus_name <- opt$locus
+
 
 #-----------------------------------------------------#
 #------                read data                ------
 #-----------------------------------------------------#
 
-# annotation data
-annotation <- read.delim(
-   vep_file,
-   col.names  = c("CHROM", "POS", "POS37", "Gene", "Gene_ID", "VEP_annot")
-   #colClasses = c("integer", "integer", "character")
-)
+# read annotated variants
+df_annot <- data.table::fread(opt$annotation)
 
 # variants file
-snps_list <- read.delim(
-   snp_file,
-   col.names  = c("CHROM", "POS", "POS37", "REF", "ALT", "AF")
-)
+names_bim <- c("CHROM", "POS", "ID", "REF", "ALT", "AF")
+snps_list <- data.table::fread(opt$variants, header = F, col.names = names_bim)
 
 # association results
-results <- readRDS(rds_file)
-results
+results <- readRDS(opt$rds)
+
 
 #-----------------------------------------------------#
 #------           Required functions          --------
@@ -93,7 +79,7 @@ extract_haplotypes <- function(df) {
   ) %>%
   ungroup() %>%
   relocate(trait_name, Haplotype, haplo_name) %>%
-  select(- Haplotype) %>%
+  dplyr::select(- Haplotype) %>%
   rename(Haplotype = haplo_name)
 }
 #----------#
@@ -106,13 +92,19 @@ extract_haplotypes <- function(df) {
 prepare_annotation <- function(df) {
   df %>%
   as_tibble() %>%
-  mutate(snpid = str_c(CHROM, ":", POS)) %>%
-  mutate(
+  dplyr::rename(
+    Gene = gene_symbol,
+    VEP_annot = most_severe_consequence
+    ) %>%
+  dplyr::mutate(
+    snpid = str_extract(variant, "([0-9]+):([0-9]+)"),
     annot = str_replace_all(VEP_annot, "_variant", ""),
     annot = str_replace_all(annot, "3_prime_[UTR|utr]", "UTR3'"),
     annot = str_replace_all(annot, "5_prime_UTR|5_prime_utr", "UTR5'"),
     #annot = str_replace_all(annot, "missense&splice_region", "splice region")
-  )
+    Gene = str_replace(Gene, "^$", "NA")
+  ) %>%
+    dplyr::select(snpid, variant, annot, Gene)
 }
 
 #----------#
@@ -120,25 +112,31 @@ prepare_annotation <- function(df) {
 adding_annotation <- function(df) {  
   
   df %>%
-  pivot_longer(cols = - c(trait_name, Haplotype),
-               names_to = "SNP",
-               values_to = "majorMinor") %>% #labeled_Allele
-  mutate(snpid = str_replace(SNP, "chr", ""),
-         snpid = str_replace(snpid, "\\.", ":")) %>% #"chr\\d{1,2}."
-  # add alelles frequencies
-  inner_join(annotation %>% prepare_annotation(), by = "snpid", relationship = "many-to-many")  %>%
-  # add variants annotations
-  inner_join(snps_list %>% mutate(snpid = str_c(CHROM, ":", POS)), join_by(CHROM, POS, POS37, snpid), relationship = "many-to-many") %>%
-  mutate(snp_ref_alt  = str_c(snpid, "_", REF, "/", ALT)) %>%
-  select(- c(CHROM, POS, POS37))
+  pivot_longer(
+    cols = - c(trait_name, Haplotype),
+    names_to = "SNP",
+    values_to = "majorMinor"
+    ) %>%
+  dplyr::mutate(
+    snpid = str_extract(SNP, "([0-9]+)_([0-9]+)") %>% str_replace("_", ":")
+    ) %>%
+  left_join(
+    df_annot %>% prepare_annotation(), # add variants annotations
+    join_by(snpid)
+    ) %>%
+  left_join(
+    snps_list %>% dplyr::mutate(snpid = paste0(CHROM, ":", POS)), 
+    join_by(snpid)
+    ) #%>%   # add alleles frequencies
+  #mutate(snp_ref_alt  = str_c(snpid, "_", REF, "/", ALT))
 }
 
 #----------#
 labeling_alleles <- function(df) {
   
   df %>%
-    # change the non-aligned columns' name for consitency with the rest of the script
-    rename(REF_org = REF, ALT_org = ALT, AF_org = AF) %>% #SNP = SNP_ID, 
+    # change the non-aligned columns' name for consistency
+    rename(REF_org = REF, ALT_org = ALT, AF_org = AF) %>%
     group_by(snpid) %>%
     # in EPACTS wiki referred -> AC: Total Non-reference Allele Count
     # https://genome.sph.umich.edu/wiki/EPACTS
@@ -169,7 +167,7 @@ dying_alleles <- function(df) {
     N_haplo    = n_distinct(Haplotype),
     N_allele   = n_distinct(aminoAcid),
     diallelic  = if_else(N_allele == 1, "", aminoAcid),
-    SNP        = str_replace(SNP, "chr", ""),
+    SNP        = str_replace(SNP, "chr_", ""),
 	  SNP        = str_replace(SNP, "_", ":")
   ) %>%
   ungroup()
@@ -200,7 +198,8 @@ labeling_axises <- function(df) {
   df %>% mutate(
     # adding gene and function of the vcariants as a second x-axis
     xlab_annot  = factor(paste0(Gene, "_", annot), levels = unique(paste0(Gene, "_", annot))),
-    tlab_snpid  = factor(snp_ref_alt, levels = unique(snp_ref_alt), ordered = TRUE)
+    #tlab_snpid  = factor(snp_ref_alt, levels = unique(snp_ref_alt), ordered = TRUE)
+    tlab_snpid  = factor(SNP, levels = unique(SNP), ordered = TRUE)
 )
 }
 
@@ -229,7 +228,8 @@ haplo_plot <- function(df) {
     #scale_x_discrete(expand = c(5, 2)) +
     labs(x = "", y = "") +
     theme_classic() +
-    theme(axis.text.x = element_text(face = "bold", angle = -35, hjust = 0.01),
+    theme(
+      axis.text.x = element_text(face = "bold", angle = -90, vjust = 0.5),
           axis.text.y = element_text(face = "bold"),
           axis.title = element_blank(),
           panel.border = element_blank(), 
@@ -238,7 +238,8 @@ haplo_plot <- function(df) {
           strip.background = element_blank(),
           strip.text.x = element_text(size = 8, face = "bold", angle = 90, vjust = 0.2, hjust = 0.0),
           # save more space for x-axis labels
-          plot.margin = margin(l = 5, r = 20, t = 2, b = 2, unit = "mm"))
+          plot.margin = margin(l = 5, r = 20, t = 2, b = 2, unit = "mm")
+      )
 }
 
 
@@ -262,9 +263,13 @@ num_haplo <- data_hap_plt %>% distinct(Haplotype) %>% nrow()
 num_snps  <- data_hap_plt %>% distinct(snpid) %>% nrow()
 num_snps_shr  <- data_hap_plt %>% shrinking_haplotype() %>% distinct(snpid) %>% nrow()
 
-cat("No. haplotypes:", num_haplo,
-    "\nNo. SNPs:", num_snps,
-    "\nNo. varied SNPs:", num_snps_shr, "\n\n")
+cat(
+  "No. haplotypes:", num_haplo,
+  "\nNo. SNPs:", num_snps,
+  "\nNo. varied SNPs:", num_snps_shr, "\n\n"
+  )
+
+
 #----------#
 # shrinked haplotypes plot
 shr_plt <- data_hap_plt %>% shrinking_haplotype() %>% haplo_plot()
@@ -284,8 +289,8 @@ hap_plt <- data_hap_plt %>% haplo_plot()
 
 #----------#
 # save haplotypes plot
-ggsave(hap_plt, filename = out.plt1, width = num_snps     / 5 + 0.5, height = num_haplo / 2 + 1.5, dpi = 350, units = "in", limitsize = FALSE)
-ggsave(shr_plt, filename = out.plt2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 2 - 1.5, dpi = 350, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
+ggsave(hap_plt, filename = opt$output1, width = num_snps     / 5 + 0.5, height = num_haplo / 2 + 1.5, dpi = 300, units = "in", limitsize = FALSE)
+ggsave(shr_plt, filename = opt$output2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 2 - 0.0, dpi = 300, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
 
 #----------#
 # print time and date

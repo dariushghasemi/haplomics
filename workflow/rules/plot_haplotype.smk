@@ -3,15 +3,15 @@ rule plot_haplotypes:
 	input:
 		script = "workflow/scripts/03-3_haplotypes_plot.R",
 		result = "results/result_associations/{locus}_{dataset}_association_results.RDS",
-		#annotation = "results/annotation/{locus}_annotation.txt",
-		#variants = "results/annotation/{locus}_variants.list"
+		annotation = "results/annotation/{locus}_summary.tsv",
+		variants   = "results/dosage/{locus}.bim"
 	output:
 		plt1 = "results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png",
 		plt2 = "results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes_shrinked.png"
 	conda:
 		"../envs/environment.yml"
 	params:
-		#result
+		region="{locus}"
 	log:
 		"logs/plot_haplotypes/{locus}_{dataset}.log"
 	resources:
@@ -19,6 +19,11 @@ rule plot_haplotypes:
 		mem_mb=get_mem_plt, disk_mb=20000
 	shell:
 		"""
-		Rscript {input.script} {input.result} {output.plt1} {output.plt2} 2> {log}
+		Rscript {input.script}  \
+			--rds {input.result}  \
+			--annotation {input.annotation}  \
+			--variants {input.variants}  \
+			--locus {params.region}  \
+			--output1 {output.plt1}  \
+			--output2 {output.plt2} 2> {log}
 		"""
-#{input.annotation} {input.variants} 
