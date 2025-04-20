@@ -1,12 +1,20 @@
-#!/usr/bin/Rscript
-
-
-# The script was created on 12 December 2023
-# to automate haplotype reconstruction analysis.
-
 # load libraries
 suppressMessages(library(tidyverse, quietly = TRUE))
 suppressMessages(library(haplo.stats, quietly = TRUE))
+suppressMessages(library(optparse, quietly = TRUE))
+
+# Get arguments specified in the sbatch
+option_list <- list(
+  make_option("--data", default=NULL, help="Path to merged genotype, phenotypes, and covariates file"),
+  make_option("--min_freq", default=0.01, help="Minimum frequency for rare haplotypes"),
+  make_option("--max_haps", default=4e6, help="Maximum number of haplotypes"),
+  make_option("--min_pp", default=1e-5, help="Minimum posterior probability"),
+  make_option("--n_batch", default=2, help="Number of batches"),
+  make_option("--n_try", default=2, help="Number of attempts"),
+  make_option("--output", default=NULL, help="Output filename")
+);
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
 
 #----------#
 # print time and date
@@ -14,12 +22,6 @@ Sys.time()
 
 # date
 today.date <- format(Sys.Date(), "%d-%b-%y")
-
-#----------#
-# taking variants file as input
-args <- commandArgs(trailingOnly = TRUE)
-pheno.geno <- args[1]
-out.assoc  <- args[2]
 
 
 #-----------------------------------------------------#
@@ -39,7 +41,7 @@ do_INT = function(values) {
 cat("\nImport data...\n")
 
 # Phenotype data merged with genotypes
-merged_data <- readRDS(pheno.geno)
+merged_data <- readRDS(opt$data)
 
 
 #-----------------------------------------------------#
@@ -57,10 +59,10 @@ cat("\n", ncol(loci), "SNPs used for building haplotypes at this locus.", "\n")
 #----------#
 
 # S2: convert the dosage to integer, then to major(1/2) or minor(1/2) alleles
-genome_binary  <- geno1to2(round(loci, 0), locus.label = colnames(loci))
+genome_binary  <- haplo.stats::geno1to2(round(loci, 0), locus.label = colnames(loci))
 
 # S3: setup genotype data
-haplo_genotype <- setupGeno(genome_binary, miss.val = c(0, NA), locus.label = colnames(loci))
+haplo_genotype <- haplo.stats::setupGeno(genome_binary, miss.val = c(0, NA), locus.label = colnames(loci))
 
 # S4: GLM data (merging phenotype and genotype data)
 haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-IID, -starts_with("chr")))
@@ -74,37 +76,46 @@ haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-IID, -start
 # Fitting regression model
 # glm fit with haplotypes, additive gender covariate on gaussian response
 
-# Defining Haplo.GLM model for iteration via map function
-hap_model <- function(df){
-  
-  # making PCs vector to adjust
-  PCs <- paste0("PC", 1:10, collapse = " + ")
-  
-  # defining model formula
-  my_formula <- paste("do_INT(trait) ~ haplo_genotype + Sex + Age +", PCs)
+# making PCs vector to adjust
+PCs <- paste0("PC", 1:10, collapse = " + ")
 
-  # Set a common random number seed for both models
-  common_iseed <- 777
+# defining model formula
+model_formula <- paste("do_INT(trait) ~ haplo_genotype + Sex + Age +", PCs)
+
+
+# Defining Haplo.GLM model for iteration via map function
+# recall parameters of haplo.GLM model from opt arguments
+hap_model <- function(
+    df,
+    n_try = opt$n_try,
+    n_batch  = opt$n_batch,
+    max_haps = opt$max_haps,
+    min_pp   = opt$min_pp,
+    min_freq = opt$min_freq,
+    my_formula = model_formula,
+    common_iseed = 777   # Set a common random number seed for both models
+    ){
+  
   
   # Set parameters to control EM algorithm
-  em_ctrl <- haplo.em.control(
-    n.try = 2,            # to have equal no. of haplotypes, phenotype must be imputed! 
+  em_ctrl <- haplo.stats::haplo.em.control(
+    n.try = n_try,            # to have equal no. of haplotypes, phenotype must be imputed! 
     iseed = common_iseed,
-    insert.batch.size = 2, # keep it =2 to equalize n.of haplo for all traits
-    max.haps.limit = 4e6,
-    min.posterior = 1e-5  # increase the prob of trimming off rare haplo at each insertion step (raise of prob will end up qith fewer haplos)
+    insert.batch.size = n_batch, # keep it =2 to equalize n.of haplo for all traits
+    max.haps.limit = max_haps,
+    min.posterior = min_pp  # increase the prob of trimming off rare haplo at each insertion step (raise of prob will end up qith fewer haplos)
     )
   
   # fiting the model
-  model_fit <- haplo.glm(
-    my_formula,
+  model_fit <- haplo.stats::haplo.glm(
+    formula = my_formula,
     family = gaussian,
     data   = df,
     na.action = "na.geno.keep",
     locus.label = colnames(loci),
     x = TRUE,
     control = haplo.glm.control(
-      haplo.freq.min = .01, # if drop it to 0.01, then it unequlizes no. haplotypes
+      haplo.freq.min = min_freq, # if drop it to 0.01, then it unequlizes no. haplotypes
       em.c = em_ctrl
       )
     )
@@ -164,7 +175,7 @@ cat("\nSaving results...\n")
 results_shrinked <- results %>% select(trait_name, haplotype, tidy)
 
 # saving the results
-saveRDS(results_shrinked, out.assoc)
+saveRDS(results_shrinked, opt$output)
 
 #----------#
 # print time and date

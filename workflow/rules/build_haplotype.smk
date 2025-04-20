@@ -8,7 +8,11 @@ rule build_haplotypes:
 	conda:
 		"../envs/environment.yml"
 	params:
-		#data
+		min_freq = config.get("thresholds").get("min_freq"),
+		max_haps = config.get("thresholds").get("max_haps"),
+		min_pp = config.get("thresholds").get("min_pp"),
+		n_batch = 2,
+		n_try = 2,
 	log:
 		"logs/build_haplotypes/{locus}_{dataset}.log"
 	resources:
@@ -16,5 +20,12 @@ rule build_haplotypes:
 		mem_mb=get_mem_mb
 	shell:
 		"""
-		Rscript {input.script} {input.data} {output.result} 2> {log}
+		Rscript {input.script}  \
+			--data {input.data}  \
+			--min_freq {params.min_freq} \
+			--max_haps {params.max_haps} \
+			--min_pp {params.min_pp} \
+			--n_batch {params.n_batch} \
+			--n_try {params.n_try} \
+			--output {output.result} 2> {log}
 		"""

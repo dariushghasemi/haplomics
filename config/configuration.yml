@@ -7,14 +7,10 @@ path_rep: "/scratch/dariush.ghasemi/projects/haploAnalysis/workflow"
 phenotype_files: "data/my_phenos.tsv,  data/my_soma.tsv"
 covariates_file: "data/my_covars.tsv"
 
-# for R (03-1.R)
-default:
-    path_phen: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_q-norm.csv"
-    path_meta: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_meta.csv"
-    path_prot: "/home/dghasemisemeskandeh/projects/HaploReg/data/chris_prot.csv"
-    path_comp: ""
-    phenotypes: ""
-    datasets: "phen soma"
+thresholds:
+    min_freq: 0.01
+    max_haps: 4e6
+    min_pp: 1e-5
 
 
 #phenotype_files: "data/chris_q-norm.csv, data/chris_meta.csv,  data/chris_prot.csv"
