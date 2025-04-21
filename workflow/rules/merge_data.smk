@@ -11,7 +11,8 @@ rule merge_data:
 		"../envs/environment.yml"
 	params:
 		covariates=config["covariates_file"],
-		covariates_provided=True #if config["covariates_file"] else False
+		covariates_provided=True,
+		min_ac = config.get("thresholds").get("min_ac"),
 	log:
 		"logs/merged_data/{locus}_{dataset}_merged_data.log"
 	resources:
@@ -24,12 +25,13 @@ rule merge_data:
 				--dosage {input.dosage} \
 				--phenotype {input.phenotype}  \
                 --covariate {params.covariates} \
+				--min_ac {params.min_ac} \
 				--output {output.odata}
 		else
 			Rscript {input.script} \
 				--dosage {input.dosage} \
 				--phenotype {input.phenotype}  \
-                --output {output.odata} \
-				--intercept_only
+				--min_ac {params.min_ac} \
+                --output {output.odata}
 		fi
 		"""

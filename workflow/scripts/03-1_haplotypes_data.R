@@ -8,7 +8,7 @@ option_list <- list(
   make_option("--dosage", default=NULL, help="Path and filename of master coloc table produced by individual traits pre-processing"),
   make_option("--phenotype", default=NULL, help="Path to phenotypes file"),
   make_option("--covariate", default=NULL, help="Path to covariates file"),
-  make_option("--mac", default=20, help="Minor allele count threshold to filter out variants below it"),
+  make_option("--min_ac", default=1, help="Minimum allele count threshold to remove mono-allelic variants with mac below it"),
   make_option("--output", default=NULL, help="Output filename")
 );
 opt_parser = OptionParser(option_list=option_list);
@@ -60,21 +60,43 @@ genome <- read.delim(
   na.strings = "."
 )
 
+#----------#
+# number of individuals in genotype file
+n_snps <- length(unique(paste0(genome$CHR,":",genome$POS)))
+n_sample <- length(unique(genome$IID))
+min_ac <- opt$min_ac
+max_ac <- n_sample - opt$min_ac
+
 
 cat("\nReshape genotypes to wide...\n")
 
 # Restructuring vcf file to wide format and merged with PCs
 genome_wide <- genome %>%
-  #filter(AF > 0.00001) %>%
   dplyr::mutate(
-    SNPid = paste("chr", CHR, POS, REF, ALT, sep = "_")
+    SNPid = paste0("chr", CHR, "_", POS, "_", REF, "_", ALT),
+    MAF = ifelse(AF > 0.5, 1 - AF, AF),
+    AC = AF * n_sample
     ) %>%
-  #distinct(AID, SNPid, .keep_all = TRUE) %>%
+  dplyr::filter(
+    #AF > 0.001 & AF < 0.999  # filter out mono-allelic variants respect to H-W equilibrium
+    AC > min_ac & AC < max_ac
+    ) %>%
   pivot_wider(
     id_cols = IID, 
     names_from = SNPid, 
     values_from = Dosage
     )
+
+# show how nany variants filtered out for AC limit
+cat(
+  "\nOf",
+  n_snps,
+  "variants,",
+  ncol(genome_wide) - 1,
+  "left with minor allele count >",
+  opt$min_ac,
+  "for building haplotypes.\n"
+  )
 
 
 #-----------------------------------------------------#
