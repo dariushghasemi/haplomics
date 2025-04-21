@@ -23,6 +23,9 @@ The user should provide:
   - phenotypes files (can be more than one esp. for studies like the CHRIS with metabolomics and proteomics)
   - covariates file (optional; usually consisting of genomic principal components and local confounders like age, sex, etc.)
 
+Note: To skip using covariates file, the user should define below parameter in configuration:
+`covariates_file: null`
+
 
 ### Run Haplomics
 
