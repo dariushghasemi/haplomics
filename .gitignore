@@ -6,15 +6,6 @@
 .RData
 .RDataTmp
 
-# Output files from R CMD build
-/*.tar.gz
-
-# RStudio files
-.Rproj.user/
-
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
 
 # knitr and R markdown default cache directories
 *_cache/
@@ -24,14 +15,6 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
-# R Environment Variables
-.Renviron
-
-# pkgdown site
-docs/
-
-# translation temp files
-po/*~
 
 # RStudio Connect folder
 rsconnect/
@@ -41,22 +24,14 @@ rsconnect/
 *.out
 
 # data, outputs
-genotype/
-phenotype/
-annotation/
 data/
-output/
-workflow/results
 logs/
-
+results*/
 
 # Snakemake files
-
 .snakemake/*
-.snakemake/metadata/*
-*/.snakemake/*
 *.pdf
 *.png
 *.html
-
+workflow/archive/
 
