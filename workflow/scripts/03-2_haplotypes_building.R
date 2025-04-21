@@ -5,7 +5,8 @@ suppressMessages(library(optparse, quietly = TRUE))
 
 # Get arguments specified in the sbatch
 option_list <- list(
-  make_option("--data", default=NULL, help="Path to merged genotype, phenotypes, and covariates file"),
+  make_option("--data", default=NULL, help="Merged genotype, phenotypes, and covariates file"),
+  make_option("--covariate", default=NULL, help="Covariates file (optional)"),
   make_option("--min_freq", default=0.01, help="Minimum frequency for rare haplotypes"),
   make_option("--max_haps", default=4e6, help="Maximum number of haplotypes"),
   make_option("--min_pp", default=1e-5, help="Minimum posterior probability"),
@@ -44,6 +45,31 @@ cat("\nImport data...\n")
 merged_data <- readRDS(opt$data)
 
 
+# checking whether the covariate file was provided and not empty
+if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){ 
+  
+  # covariate file
+  covar_data <- data.table::fread(opt$covariate)
+  
+  # Extract covariate names excluding ids
+  covariates <- colnames(covar_data[, !"IID", with = FALSE])
+  
+  # Build covariate terms to adjust
+  covar_term <- paste0(covariates, collapse = " + ")
+  
+  # defining model formula with covariates
+  model_formula <- paste("do_INT(trait) ~ haplo_genotype +", covar_term)
+  
+} else{
+  
+  # defining model formula without covariates
+  model_formula <- paste("do_INT(trait) ~ haplo_genotype")
+  covariates <- NULL
+
+}
+
+
+
 #-----------------------------------------------------#
 #-------            Haplotype data           ---------
 #-----------------------------------------------------#
@@ -73,16 +99,7 @@ haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-IID, -start
 #-------       Haplotype reconstruction      ---------
 #-----------------------------------------------------#
 
-# Fitting regression model
-# glm fit with haplotypes, additive gender covariate on gaussian response
-
-# making PCs vector to adjust
-PCs <- paste0("PC", 1:10, collapse = " + ")
-
-# defining model formula
-model_formula <- paste("do_INT(trait) ~ haplo_genotype + Sex + Age +", PCs)
-
-
+# Fitting regression model: additive haplotypes and covariate on gaussian response
 # Defining Haplo.GLM model for iteration via map function
 # recall parameters of haplo.GLM model from opt arguments
 hap_model <- function(
@@ -153,7 +170,7 @@ cat("\nBuilding model...\n")
 # Iterating the model on the traits
 results <- haplo_dataset %>%
   #select(- any_of(quantVars[c(1:13, 15:38, 40:76)])) %>%
-  pivot_longer(cols      = - c(haplo_genotype, Age, Sex, PC1:PC10),
+  pivot_longer(cols      = - c(haplo_genotype, all_of(covariates)),
                names_to  = "trait_name",
                values_to = "trait") %>%
   group_by(trait_name) %>%

@@ -8,6 +8,7 @@ rule build_haplotypes:
 	conda:
 		"../envs/environment.yml"
 	params:
+		covar_file = config["covariates_file"],
 		min_freq = config.get("thresholds").get("min_freq"),
 		max_haps = config.get("thresholds").get("max_haps"),
 		min_pp = config.get("thresholds").get("min_pp"),
@@ -22,6 +23,7 @@ rule build_haplotypes:
 		"""
 		Rscript {input.script}  \
 			--data {input.data}  \
+			--covariate {params.covar_file} \
 			--min_freq {params.min_freq} \
 			--max_haps {params.max_haps} \
 			--min_pp {params.min_pp} \
