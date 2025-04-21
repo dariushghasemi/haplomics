@@ -5,15 +5,17 @@ suppressMessages(library(data.table))
 
 # Get arguments specified in the sbatch
 option_list <- list(
-  make_option("--dosage", default=NULL, help="Path and filename of master coloc table produced by individual traits pre-processing"),
-  make_option("--phenotype", default=NULL, help="Path to phenotypes file"),
-  make_option("--covariate", default=NULL, help="Path to covariates file"),
-  make_option("--min_ac", default=1, help="Minimum allele count threshold to remove mono-allelic variants with mac below it"),
-  make_option("--output", default=NULL, help="Output filename")
+  make_option("--dosage", type="character", help="Dosage file"),
+  make_option("--phenotype", type="character", help="Phenotypes file"),
+  make_option("--covariate", type="character", help="Covariates file (optional)"),
+  make_option("--min_ac", type="numeric", default=NULL, help="Minimum allele count threshold to remove mono-allelic variants with mac below it"),
+  make_option("--output", type="character", help="Output filename")
 );
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
+cat("\nParsed parameters:\n")
+print(opt)
 
 #-----------------------------------------------------#
 #-------               Functions             ---------
@@ -42,10 +44,6 @@ pheno_file <- data.table::fread(opt$phenotype) #colClass = c(IID = "character")
 # list of traits in phenotype file
 phenome <- colnames(pheno_file %>% dplyr::select(- IID))
 
-# Principle components and covariates
-covar_file <- data.table::fread(opt$covariate)
-
-#----------#
 
 # column names in dosage file
 dosage_cols <- c("IID", "CHR", "POS", "MARKER_ID", "REF", "ALT", "AF", "Dosage")
@@ -67,7 +65,15 @@ n_sample <- length(unique(genome$IID))
 min_ac <- opt$min_ac
 max_ac <- n_sample - opt$min_ac
 
+cat(
+  "Minimum allele count (AC) is:", opt$min_ac,
+  "\nGiven", n_sample,
+  "samples, variants with AC below", min_ac,
+  "and above", max_ac,
+  "will be removed."
+  )
 
+#----------#
 cat("\nReshape genotypes to wide...\n")
 
 # Restructuring vcf file to wide format and merged with PCs
@@ -105,34 +111,40 @@ cat(
 
 cat("\nMerge with traits...\n")
 
-if(!file.exists(opt$covariate)){
+if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
   
+  # Principle components and covariates
+  covar_file <- data.table::fread(opt$covariate)
+  
+  merged_file <- genome_wide %>%
+    inner_join(by = "IID", pheno_file) %>%
+    inner_join(by = "IID", covar_file) %>%
+    dplyr::mutate(
+      across(any_of(phenome), as.numeric),
+      across(any_of(phenome), median_imput),
+      #across(Age, as.numeric),
+      #across(Sex, as.factor)
+      )
+  
+  cat("Genotype merged with phenotype and covariate files.\n")
+} else{
   # dataset containing genotypes and clinical traits
   merged_file <- genome_wide %>%
     inner_join(by = "IID", pheno_file) %>%
     dplyr::mutate(
       across(any_of(phenome), as.numeric),
       across(any_of(phenome), median_imput)
-    ) #%>% slice_head(n = 6000)
+    )
   
-  } else{
-    
-    merged_file <- genome_wide %>%
-      inner_join(by = "IID", pheno_file) %>%
-      inner_join(by = "IID", covar_file) %>%
-      dplyr::mutate(
-        across(any_of(phenome), as.numeric),
-        across(any_of(phenome), median_imput),
-        across(Age, as.numeric),
-        across(Sex, as.factor)
-      )
-    }
+  cat("Genotype merged with phenotype; no covariate file provided.\n")
+  }
 
+
+cat("Merged file looks like this:\n")
+str(merged_file)
 
 #----------#
-cat("\nSave output datasets...\n")
+cat("\nSave merged dataset...\n")
 
 # save the merged data
 saveRDS(merged_file, file = opt$output)
-
-

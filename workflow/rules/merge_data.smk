@@ -10,8 +10,7 @@ rule merge_data:
 	conda:
 		"../envs/environment.yml"
 	params:
-		covariates=config["covariates_file"],
-		covariates_provided=True,
+		covariate = config.get("covariates_file"),
 		min_ac = config.get("thresholds").get("min_ac"),
 	log:
 		"logs/merged_data/{locus}_{dataset}_merged_data.log"
@@ -20,18 +19,10 @@ rule merge_data:
 		mem_mb=get_mem_plt, disk_mb=20000
 	shell:
 		"""
-		if [ {params.covariates_provided} = True ]; then
-			Rscript {input.script} \
-				--dosage {input.dosage} \
-				--phenotype {input.phenotype}  \
-                --covariate {params.covariates} \
-				--min_ac {params.min_ac} \
-				--output {output.odata}
-		else
-			Rscript {input.script} \
-				--dosage {input.dosage} \
-				--phenotype {input.phenotype}  \
-				--min_ac {params.min_ac} \
-                --output {output.odata}
-		fi
+		Rscript {input.script} \
+			--dosage {input.dosage} \
+			--phenotype {input.phenotype}  \
+			--covariate {params.covariate}  \
+			--min_ac {params.min_ac} \
+			--output {output.odata}  2> {log}
 		"""
