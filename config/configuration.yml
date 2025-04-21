@@ -11,6 +11,7 @@ thresholds:
     min_freq: 0.01
     max_haps: 4e6
     min_pp: 1e-5
+    min_ac: 5
 
 
 #phenotype_files: "data/chris_q-norm.csv, data/chris_meta.csv,  data/chris_prot.csv"
