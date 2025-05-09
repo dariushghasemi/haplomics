@@ -5,9 +5,13 @@ channels:
   - defaults
   - R
 dependencies:
+  - bcftools=1.21
   - r-base=4.3.3
   - r-optparse=1.7.4
   - r-tidyverse=2.0.0
   - r-data.table=1.15.2
   - r-R.utils=2.12.3
+  - r-haplo.stats=1.9.7
+  - r-pheatmap=1.0.12
+  
   
