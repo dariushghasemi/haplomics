@@ -77,12 +77,7 @@ if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
 cat("\nBuilding data...\n")
 
 # S1: selecting the variants
-loci <- merged_data %>% dplyr::select(starts_with("chr"))
-
-#----------#
-# Number of variants
-cat("\n", ncol(loci), "SNPs used for building haplotypes at this locus.", "\n")
-#----------#
+loci <- merged_data %>% dplyr::select(matches("chr[0-9]{,2}_[0-9]+_[ATCG]+_[ATCG]+"))
 
 # S2: convert the dosage to integer, then to major(1/2) or minor(1/2) alleles
 genome_binary  <- haplo.stats::geno1to2(round(loci, 0), locus.label = colnames(loci))
@@ -91,8 +86,11 @@ genome_binary  <- haplo.stats::geno1to2(round(loci, 0), locus.label = colnames(l
 haplo_genotype <- haplo.stats::setupGeno(genome_binary, miss.val = c(0, NA), locus.label = colnames(loci))
 
 # S4: GLM data (merging phenotype and genotype data)
-haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% select(-IID, -starts_with("chr")))
+haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% dplyr::select(-IID, -matches("chr[0-9]{,2}_[0-9]+_[ATCG]+_[ATCG]+")))
 
+#----------#
+# Number of variants
+cat("\n", ncol(loci), "SNPs used for building haplotypes at this locus.", "\n")
 
 
 #-----------------------------------------------------#
@@ -145,17 +143,20 @@ hap_model <- function(
 haplo_extract <- function(model) {
   
   haplo_set <- summary(model)$haplotypes %>%
-    rownames_to_column(var = "Haplotype") %>%
-    mutate(Haplotype = str_replace(
-      Haplotype,
-      "(?<=\\.)\\d{1,2}(?!\\d)",
-      sprintf("%03d", as.numeric(str_extract(Haplotype, "(?<=\\.)\\d{1,2}(?!\\d)")))),
+    tibble::rownames_to_column(var = "Haplotype") %>%
+    dplyr::mutate(
+      Haplotype = str_replace(
+        Haplotype,
+        "(?<=\\.)\\d{1,2}(?!\\d)",
+        sprintf("%03d", as.numeric(str_extract(Haplotype, "(?<=\\.)\\d{1,2}(?!\\d)")))
+        ),
       Haplotype = str_replace_all(
-	    Haplotype, c(
-		    "haplo_genotype." = "H",
-            "haplo.base"      = "Ref.")
-			)
-	)
+        Haplotype, c(
+          "haplo_genotype." = "H", 
+          "haplo.base"      = "Ref."
+          )
+        )
+      )
   
   return(haplo_set)
 }
@@ -169,16 +170,20 @@ cat("\nBuilding model...\n")
 
 # Iterating the model on the traits
 results <- haplo_dataset %>%
-  #select(- any_of(quantVars[c(1:13, 15:38, 40:76)])) %>%
-  pivot_longer(cols      = - c(haplo_genotype, all_of(covariates)),
-               names_to  = "trait_name",
-               values_to = "trait") %>%
+  pivot_longer(
+    cols      = - c(haplo_genotype, all_of(covariates)),
+    names_to  = "trait_name",
+    values_to = "trait"
+    ) %>%
   group_by(trait_name) %>%
   nest() %>%
-  mutate(model     = data  %>% map(hap_model),
-         haplotype = model %>% map(haplo_extract),
-         glance    = model %>% map(broom::glance),
-         tidy      = model %>% map(broom::tidy))
+  dplyr::mutate(
+    model     = data  %>% map(hap_model),
+    haplotype = model %>% map(haplo_extract),
+    glance    = model %>% map(broom::glance),
+    tidy      = model %>% map(broom::tidy)
+    ) %>%
+  ungroup()
 
 
 results %>% unnest(tidy)
@@ -189,7 +194,7 @@ results %>% unnest(tidy)
 cat("\nSaving results...\n")
 
 # Drop unnecessary results
-results_shrinked <- results %>% select(trait_name, haplotype, tidy)
+results_shrinked <- results %>% dplyr::select(- data)
 
 # saving the results
 saveRDS(results_shrinked, opt$output)
