@@ -101,7 +101,7 @@ draw_annot <- function(df) {
     scale_x_continuous(breaks = my_breaks, limits = c(0, y_lim)) +
     labs(
       y = NULL, 
-      x = paste0("\nNumber of instances at ", locus_name), 
+      x = paste0("\nNumber of variants"), 
       fill = "Annotation"
       ) +
     #coord_flip() +
