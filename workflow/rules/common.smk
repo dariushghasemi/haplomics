@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import pandas as pd
 
-path_loci="config/locus_window_test.txt"
+path_loci = config.get("path_loci")
 
 # Define input for the rules
 data = []
