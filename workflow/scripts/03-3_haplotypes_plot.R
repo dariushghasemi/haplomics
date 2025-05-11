@@ -177,9 +177,13 @@ dying_alleles <- function(df) {
 shrinking_haplotype <- function(df) {
 
   df %>%
-  # shrinking the plot to colored variants
-  filter(N_allele == 2) %>% 
-  ungroup()
+    # check if a variant is biallelic
+    dplyr::mutate(is_snp = nchar(REF) == 1 & nchar(ALT) == 1) %>%
+    dplyr::filter(
+      N_allele == 2,  # shrinking the plot to colored variants
+      is_snp == TRUE  # keep biallelic variants and remove multi-allelic
+      ) %>%
+    ungroup()
 }
 
 #----------#
@@ -224,8 +228,7 @@ haplo_plot <- function(df) {
     geom_hline(yintercept = num_haplo - .5, lty = 1, linewidth = .7, color = "grey50") +
     scale_color_manual(values = c("deepskyblue1", "green1", "magenta1", "#FF3434", "gold1", "grey50", "navyblue", "orange2")) +
     facet_wrap(~ tlab_snpid, scales = "free_x", nrow = 1) +
-    #geom_hline(yintercept = 21 - .5, lty = 1, linewidth = .7, color = "grey50") +
-    #scale_x_discrete(expand = c(5, 2)) +
+    scale_y_discrete(position = "right") +
     labs(x = "", y = "") +
     theme_classic() +
     theme(
@@ -238,7 +241,7 @@ haplo_plot <- function(df) {
           strip.background = element_blank(),
           strip.text.x = element_text(size = 8, face = "bold", angle = 90, vjust = 0.2, hjust = 0.0),
           # save more space for x-axis labels
-          plot.margin = margin(l = 5, r = 20, t = 2, b = 2, unit = "mm")
+          plot.margin = margin(l = 5, r = 10, t = 2, b = 2, unit = "mm")
       )
 }
 
@@ -261,12 +264,15 @@ data_hap_plt <- results %>%
 # width and height of the plot, also for shrinked plot
 num_haplo <- data_hap_plt %>% distinct(Haplotype) %>% nrow()
 num_snps  <- data_hap_plt %>% distinct(snpid) %>% nrow()
-num_snps_shr  <- data_hap_plt %>% shrinking_haplotype() %>% distinct(snpid) %>% nrow()
+num_snps_shr <- data_hap_plt %>% shrinking_haplotype() %>% distinct(snpid) %>% nrow()
+num_snps_plt <- data_hap_plt %>% dplyr::filter(N_allele == 2) %>% distinct(snpid) %>% nrow()
 
 cat(
   "No. haplotypes:", num_haplo,
   "\nNo. SNPs:", num_snps,
-  "\nNo. varied SNPs:", num_snps_shr, "\n\n"
+  "\nNo. varied SNPs:", num_snps_plt, 
+  "\nNo. varied, bi-allelic variants shown on the plot:", num_snps_shr,
+  "\n\n"
   )
 
 
@@ -290,7 +296,7 @@ hap_plt <- data_hap_plt %>% haplo_plot()
 #----------#
 # save haplotypes plot
 ggsave(hap_plt, filename = opt$output1, width = num_snps     / 5 + 0.5, height = num_haplo / 2 + 1.5, dpi = 300, units = "in", limitsize = FALSE)
-ggsave(shr_plt, filename = opt$output2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 2 - 0.0, dpi = 300, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
+ggsave(shr_plt, filename = opt$output2, width = num_snps_shr / 3 + 0.5, height = num_haplo / 2 + 4.5, dpi = 300, units = "in", limitsize = FALSE) #num_snps_shr / 2 - 0.5
 
 #----------#
 # print time and date
