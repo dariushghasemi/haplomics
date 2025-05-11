@@ -39,7 +39,7 @@ cat("\nImport data...\n")
 
 
 # phenotypes
-pheno_file <- data.table::fread(opt$phenotype) #colClass = c(IID = "character")
+pheno_file <- data.table::fread(opt$phenotype, colClass = c(IID = "character"))
 
 # list of traits in phenotype file
 phenome <- colnames(pheno_file %>% dplyr::select(- IID))
@@ -114,7 +114,7 @@ cat("\nMerge with traits...\n")
 if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
   
   # Principle components and covariates
-  covar_file <- data.table::fread(opt$covariate)
+  covar_file <- data.table::fread(opt$covariate, colClass = c(IID = "character"))
   
   merged_file <- genome_wide %>%
     inner_join(by = "IID", pheno_file) %>%
