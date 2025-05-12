@@ -1,0 +1,41 @@
+executor: slurm
+jobs: 450
+software-deployment-method:
+   - conda
+#   - apptainer
+retries: 3
+
+# Cluster submission
+jobname:
+max-jobs-per-second: 10
+max-status-checks-per-second: 1
+local-cores: 1
+cores: &cores 2
+latency-wait: 60
+keep-going: True
+rerun-incomplete: True
+printshellcmds: True
+scheduler: ilp
+
+default-resources:
+    slurm_partition: cpuq
+    slurm_account:
+    mem_mb: attempt * 512
+    threads: 1
+    runtime: attempt * 5
+
+set-resources:
+    get_locus:
+        mem_mb: 8000 + attempt * 2048
+    get_dosage:
+        mem_mb: 8000 + attempt * 2048
+    merge_data:
+        mem_mb: 8000 + attempt * 2048
+        threads: *cores
+    build_haplotypes:
+        mem_mb: 8000 + attempt * 2048
+        disk_mb: 8000 + attempt * 2048
+    plot_haplotypes:
+        mem_mb: 2048 + attempt * 2048
+    plot_heatmap:
+        mem_mb: 10000 + attempt * 2048
