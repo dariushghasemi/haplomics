@@ -1,50 +1,61 @@
 #!/usr/bin/Rscript
 
-#----------#
+suppressMessages(library(optparse))
+suppressMessages(library(tidyverse))
+suppressMessages(library(data.table))
+
 # print time and date
 Sys.time()
 
-# date
-today.date <- format(Sys.Date(), "%d-%b-%y")
+#----------#
+# Get arguments specified in the sbatch
+option_list <- list(
+  make_option("--variants", default=NULL, help="List of variants"),
+  make_option("--output", default=NULL, help="Output filename")
+);
+opt_parser = OptionParser(option_list = option_list);
+opt = parse_args(opt_parser);
+
 
 #----------#
-# taking variants file as input
-args <- commandArgs(trailingOnly = TRUE)
-variants_file <- args[1]
-hist_plt_file <- args[2]
-
-# taking the locus name
-locus_name  <- gsub("_variants.list", "", basename(variants_file))
-locus_name
-
-#------------------------#
-library(dplyr)
-library(ggplot2)
-
-#------------------------#
 # define the columns names
-variants_header <- c("CHROM", "POS", "ID", "REF", "ALT", "AF")
+headers <- c("CHROM", "POS", "ID", "REF", "ALT", "AF")
 
-# read the varinats_file
-df_variants <- data.table::fread(variants_file, header = FALSE, sep = "\t", col.names = variants_header)
+# read the variants file
+df_variants <- data.table::fread(opt$variants, header = FALSE, sep = "\t", col.names = headers)
 
-#------------------------#
+# making allele freq consistent for whole variant to have AF<0.5
+df_variants <- df_variants %>% dplyr::mutate(AFc = if_else(AF <= 0.5, AF, 1 - AF)) 
+
+#----------#
+# set dynamic breaks for axices
+n <- length(df_variants$AFc)
+bin_width <- 2 * IQR(df_variants$AFc) / (n^(1/3))
+bins <- ceiling((max(df_variants$AFc) - min(df_variants$AFc)) / bin_width)
+x_breaks <- pretty(range(df_variants$AFc), n = 7)
+
+# Calculate the histogram counts to determine y-axis breaks
+hist_counts <- hist(df_variants$AFc, plot = FALSE, breaks = x_breaks)$counts
+y_breaks <- pretty(range(hist_counts), n = 5)
+y_lim <- max(y_breaks)
+
+#----------#
+# draw the plot
 af_histo <- df_variants %>%
-  mutate(AF_compl = if_else(AF <= 0.5, AF, 1 - AF)) %>% # making allele freq consistent for whole variant to have AF<0.5
-  ggplot(aes(AF_compl)) +
-  geom_histogram(bins = 50, color = NA, fill = "skyblue") +
+  ggplot(aes(AFc)) +
+  geom_histogram(bins = 30, color = "skyblue", fill = "steelblue2") +
+  scale_x_continuous(breaks = x_breaks) +
+  scale_y_continuous(breaks = y_breaks, limits = c(0, y_lim)) + 
   labs(
-	x = paste0("Allele frequency of variants at *", locus_name, "*"),
-	y = "Number of instances"
+    x = "\nAllele frequency of variants",
+    y = "Number of instances"
   ) +
   theme_classic() +
   theme(
-  axis.title = ggtext::element_markdown(size = 14, face = 2),
-  axis.text  = element_text(size = 14, face = 1)
+    axis.title = element_text(size = 14, face = 2),
+    axis.text  = element_text(size = 14, face = 1)
   )
 
-
-
-#------------------------#
+#----------#
 # saving the histogram
-ggsave(af_histo, filename = hist_plt_file, width = 9, height = 5.5, dpi = 300, units = "in")
+ggsave(af_histo, filename = opt$output, width = 9, height = 5.5, dpi = 300, units = "in")

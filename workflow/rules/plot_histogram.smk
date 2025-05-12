@@ -1,13 +1,15 @@
 
 rule plot_histogram:
 	input:
-		script   = "scripts/01-3_plot_histogram.R",
-		variants = "results/annotation/{locus}_variants.list"
+		script   = "workflow/scripts/01-3_plot_histogram.R",
+		variants = "results/dosage/{locus}.bim"
 	output:
-		plot = "results/plot_histogram/{locus}_plot_histo.png"
+		plot = "results/plot_histogram/{locus}.png"
 	conda:
 		"../envs/environment.yml"
 	shell:
 		"""
-		Rscript {input.script} {input.variants} {output.plot}
+		Rscript {input.script}  \
+			--variants {input.variants}  \
+			--output {output.plot}
 		"""
