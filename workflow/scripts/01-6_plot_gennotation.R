@@ -113,7 +113,7 @@ draw_annot <- function(df) {
       axis.text.x = element_text(size = 12, face = 1),      
       axis.text.y = element_text(size = 12, face = 4, angle = 0, vjust = 0.5, hjust = 0),
       #panel.grid.major.y = element_line(linetype = 'solid', color = "grey70", linewidth = .2),
-      plot.margin = margin(l = 2, r = 5, t = 10, b = 5, unit = "mm")
+      plot.margin = margin(l = 20, r = 50, t = 5, b = 5, unit = "mm")
     )
   
 }
@@ -134,5 +134,5 @@ plt_annot <- plt_annot_df %>% draw_annot()
 
 #------------------------#
 # saving plot
-ggsave(plt_annot, filename = opt$output, width = 11, height = 8, dpi = 300, units = "in")
+ggsave(plt_annot, filename = opt$output, width = 12, height = 8, dpi = 300, units = "in")
 
