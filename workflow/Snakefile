@@ -7,35 +7,10 @@ min_version("8.4.1")
 
 # read the configuration file
 configfile: "config/configuration.yml"
-#------------------------#
 
-# Read configuration from user input
-#DATA_FILES = config["phenotype_files"].split(",")
-
+# response rule to define wildcards
 include: "rules/common.smk"
 
-# Get loci and data types from the input file
-#LOCI = parse_loci(config["path_loci"])
-#PHENO_PATHS = parse_phenotype(config["phenotype_files"]) # Get phenotype file paths
-
-#------------------------#
-from datetime import date
-
-today = date.today()
-my_date = today.strftime('%d-%b-%y')
-#print("Today is:", formatted_date)
-#------------------------#
-
-# functions
-def get_mem_mb(wildcards, attempt):
-    return 66672 + attempt * 4096
-
-def get_mem_plt(wildcards, attempt):
-    return 2192 + attempt * 2048
-
-def higher_time(wildcards, attempt):
-    return 1 + attempt * 2
-#------------------------#
 
 # a pseudo-rule that collects the target files
 rule all:
