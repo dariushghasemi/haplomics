@@ -7,6 +7,8 @@ rule plot_annotation:
 		plot = "results/plot_annotation/{locus}.png"
 	conda:
 		"../envs/environment.yml"
+	resources:
+		runtime=lambda wc, attempt: attempt * 30,
 	params:
 		region = "{locus}"
 	shell:

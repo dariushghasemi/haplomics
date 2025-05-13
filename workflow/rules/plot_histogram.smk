@@ -7,6 +7,8 @@ rule plot_histogram:
 		plot = "results/plot_histogram/{locus}.png"
 	conda:
 		"../envs/environment.yml"
+	resources:
+		runtime=lambda wc, attempt: attempt * 30,
 	shell:
 		"""
 		Rscript {input.script}  \

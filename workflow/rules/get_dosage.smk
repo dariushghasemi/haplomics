@@ -11,7 +11,6 @@ rule get_dosage:
 		"../envs/environment.yml"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=5000
 	shell:
 		"""
 		# extract variants in the region after merging

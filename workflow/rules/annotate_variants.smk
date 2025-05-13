@@ -10,7 +10,6 @@ rule annotate_variants:
 		"../envs/environment.yml"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=5000
 	shell:
 		"""
 		source /exchange/healthds/singularity_functions

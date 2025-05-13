@@ -9,13 +9,10 @@ rule plot_heatmap:
 		rds = "results/result_tidied/{locus}_{dataset}_association_results_tidied.RDS"
 	conda:
 		"../envs/environment.yml"
-	params:
-		#result
 	log:
 		"logs/plot_heatmaps/{locus}_{dataset}.log"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=32000
 	shell:
 		"""
 		Rscript {input.script} {input.result} {output.plt} {output.tbl} {output.rds} 2> {log}

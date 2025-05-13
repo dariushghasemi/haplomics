@@ -18,7 +18,6 @@ rule build_haplotypes:
 		"logs/build_haplotypes/{locus}_{dataset}.log"
 	resources:
 		runtime=lambda wc, attempt: attempt * 6000,
-		mem_mb=get_mem_mb
 	shell:
 		"""
 		Rscript {input.script}  \

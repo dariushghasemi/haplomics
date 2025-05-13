@@ -10,7 +10,6 @@ rule get_locus:
 		region = lambda wildcards: get_region(wildcards.locus),
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=5000
 	shell:
 		"""
 		echo "Region: {params.region}"

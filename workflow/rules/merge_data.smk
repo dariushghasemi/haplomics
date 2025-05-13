@@ -16,7 +16,6 @@ rule merge_data:
 		"logs/merged_data/{locus}_{dataset}_merged_data.log"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=20000
 	shell:
 		"""
 		Rscript {input.script} \

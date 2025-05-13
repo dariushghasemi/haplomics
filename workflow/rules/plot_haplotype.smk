@@ -16,7 +16,6 @@ rule plot_haplotypes:
 		"logs/plot_haplotypes/{locus}_{dataset}.log"
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=get_mem_plt, disk_mb=20000
 	shell:
 		"""
 		Rscript {input.script}  \

@@ -29,8 +29,15 @@ set-resources:
         mem_mb: 8000 + attempt * 2048
     get_dosage:
         mem_mb: 8000 + attempt * 2048
+    plot_histogram:
+        mem_mb: 512 + attempt * 512
+    annotate_variants: 
+        mem_mb: 512 + attempt * 512
+    plot_annotation:
+        mem_mb: 512 + attempt * 512
     merge_data:
         mem_mb: 8000 + attempt * 2048
+        disk_mb: 8000 + attempt * 2048
         threads: *cores
     build_haplotypes:
         mem_mb: 8000 + attempt * 2048
@@ -39,3 +46,4 @@ set-resources:
         mem_mb: 2048 + attempt * 2048
     plot_heatmap:
         mem_mb: 10000 + attempt * 2048
+    
