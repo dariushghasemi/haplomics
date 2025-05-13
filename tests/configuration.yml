@@ -1,0 +1,14 @@
+datasets: "phenos,soma"
+
+# pathes -> loci file should be tab-separated.
+path_loci: "config/slc34a1.txt"
+path_vcf: "data/chr22_no_indels_freq.vcf.gz"
+path_rep: "/scratch/dariush.ghasemi/projects/haploAnalysis/workflow"
+phenotype_files: "data/my_phenos.tsv, data/my_soma.tsv"
+covariates_file: "data/my_covars.tsv"
+
+thresholds:
+    min_freq: 0.01
+    max_haps: 4e6
+    min_pp: 1e-5
+    min_ac: 5
