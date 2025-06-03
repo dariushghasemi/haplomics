@@ -194,7 +194,7 @@ results %>% unnest(tidy)
 cat("\nSaving results...\n")
 
 # Drop unnecessary results
-results_shrinked <- results %>% dplyr::select(- data)
+results_shrinked <- results %>% dplyr::select(- c(data, model, glance))
 
 # saving the results
 saveRDS(results_shrinked, opt$output)
