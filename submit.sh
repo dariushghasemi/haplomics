@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name haplomics
-#SBATCH --output %j_data_merge.log
+#SBATCH --output %j_chris.log
 #SBATCH --partition cpuq
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 4G
