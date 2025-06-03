@@ -47,3 +47,7 @@ unlock:
 dockerfile_:
 	source $(CONDA_ENV_DIR)/activate $(CONDA_ENV_NAME) && \
 	snakemake --containerize --snakefile workflow/Snakefile > Dockerfile
+
+test:
+	source $(CONDA_ENV_DIR)/activate $(CONDA_ENV_NAME) && \
+	snakemake --profile slurm --snakefile workflow/test.smk
