@@ -1,18 +1,14 @@
-datasets: "phen,soma"
+datasets: "phen,meta,prot"
 
-# pathes
-path_loci: "config/locus_window_test.txt"
-path_vcf: "/scratch/dariush.ghasemi/projects/haploAnalysis/data/chr22_no_indels_freq.vcf.gz"
+# pathes -> loci file should be tab-separated.
+path_loci: "config/slc34a1.txt"
+path_vcf: "data/CHRIS13K.WES.imputed.rsq03.vep.hg38.sorted.vcf.gz"
 path_rep: "/scratch/dariush.ghasemi/projects/haploAnalysis/workflow"
-phenotype_files: "data/my_phenos.tsv,  data/my_soma.tsv"
-covariates_file: "data/my_covars.tsv"
+phenotype_files: "data/chris_clinicals.tsv, data/chris_metabolomics.tsv, data/chris_prot.csv"
+covariates_file: "data/chris_covars.tsv"
 
 thresholds:
     min_freq: 0.01
     max_haps: 4e6
     min_pp: 1e-5
     min_ac: 5
-
-
-#phenotype_files: "data/chris_q-norm.csv, data/chris_meta.csv,  data/chris_prot.csv"
-#covariates_file: "data/CHRIS13K.GT.evecs"
