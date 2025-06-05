@@ -26,16 +26,6 @@ today.date <- format(Sys.Date(), "%d-%b-%y")
 
 
 #-----------------------------------------------------#
-#-------               Functions             ---------
-#-----------------------------------------------------#
-
-# inverse-normal transformation
-do_INT = function(values) {
-  qnorm((rank(values, na.last = "keep", ties.method = "random") - 0.5) / sum(!is.na(values)))
-}
-
-
-#-----------------------------------------------------#
 #-------              Import data            ---------
 #-----------------------------------------------------#
 
@@ -58,12 +48,12 @@ if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
   covar_term <- paste0(covariates, collapse = " + ")
   
   # defining model formula with covariates
-  model_formula <- paste("do_INT(trait) ~ haplo_genotype +", covar_term)
+  model_formula <- paste("trait ~ haplo_genotype +", covar_term)
   
 } else{
   
   # defining model formula without covariates
-  model_formula <- paste("do_INT(trait) ~ haplo_genotype")
+  model_formula <- paste("trait ~ haplo_genotype")
   covariates <- NULL
 
 }
