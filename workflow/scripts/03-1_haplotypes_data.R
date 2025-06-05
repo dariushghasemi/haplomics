@@ -17,18 +17,6 @@ opt = parse_args(opt_parser);
 cat("\nParsed parameters:\n")
 print(opt)
 
-#-----------------------------------------------------#
-#-------               Functions             ---------
-#-----------------------------------------------------#
-
-# inverse-normal transformation
-do_INT = function(values) {
-  qnorm((rank(values, na.last = "keep", ties.method = "random") - 0.5) / sum(!is.na(values)))
-}
-
-# median imputation
-median_imput = function(x) ifelse(is.na(x), median(x, na.rm = T), x)
-
 
 
 #-----------------------------------------------------#
@@ -120,10 +108,7 @@ if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
     inner_join(by = "IID", pheno_file) %>%
     inner_join(by = "IID", covar_file) %>%
     dplyr::mutate(
-      across(any_of(phenome), as.numeric),
-      across(any_of(phenome), median_imput),
-      #across(Age, as.numeric),
-      #across(Sex, as.factor)
+      across(any_of(phenome), as.numeric)
       )
   
   cat("Genotype merged with phenotype and covariate files.\n")
@@ -132,8 +117,7 @@ if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
   merged_file <- genome_wide %>%
     inner_join(by = "IID", pheno_file) %>%
     dplyr::mutate(
-      across(any_of(phenome), as.numeric),
-      across(any_of(phenome), median_imput)
+      across(any_of(phenome), as.numeric)
     )
   
   cat("Genotype merged with phenotype; no covariate file provided.\n")
