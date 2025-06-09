@@ -12,8 +12,8 @@ rule build_haplotypes:
 		min_freq = config.get("thresholds").get("min_freq"),
 		max_haps = config.get("thresholds").get("max_haps"),
 		min_pp = config.get("thresholds").get("min_pp"),
-		n_batch = 2,
-		n_try = 2,
+		n_batch = config.get("thresholds").get("n_batch"),
+		n_try = config.get("thresholds").get("n_try"),
 	log:
 		ws_path("logs/build_haplotypes/{locus}_{dataset}.log")
 	resources:

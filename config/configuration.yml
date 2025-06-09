@@ -11,4 +11,6 @@ thresholds:
     min_freq: 0.01
     max_haps: 4e6
     min_pp: 1e-5
+    n_try: 2
+    n_batch: 2
     min_ac: 5
