@@ -1,7 +1,8 @@
+import os
 
 rule render_report:
 	input:
-		markdown = "workflow/scripts/04-0_report.Rmd",
+		markdown = "workflow/scripts/04-0_report.qmd",
 		plt_hist = "results/plot_histogram/{locus}.png",
 		plt_anot = "results/plot_annotation/{locus}.png",
 		plt_hap1 = lambda wc: expand("results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png", locus = wc.locus, dataset = wc.dataset),
@@ -15,13 +16,18 @@ rule render_report:
 		locus = "{locus}",
 		assay = "{dataset}",
 		html = "{locus}_{dataset}.nb.html",
-		odir = "results/report_html/"
+		odir = "results/report_html/",
+		hist_abs = lambda wc: os.path.abspath(f"results/plot_histogram/{wc.locus}.png"),
+		anot_abs = lambda wc: os.path.abspath(f"results/plot_annotation/{wc.locus}.png"),
+		hap1_abs = lambda wc: os.path.abspath(f"results/plot_haplotypes/{wc.locus}_{wc.dataset}_plot_haplotypes.png"),
+		hap2_abs = lambda wc: os.path.abspath(f"results/plot_haplotypes/{wc.locus}_{wc.dataset}_plot_haplotypes_shrinked.png"),
+		heat_abs = lambda wc: os.path.abspath(f"results/plot_heatmaps/{wc.locus}_{wc.dataset}_plot_heatmap.png"),
+		res_abs  = lambda wc: os.path.abspath(f"results/result_tidied/{wc.locus}_{wc.dataset}_association_results_tidied.RDS")
 	conda:
 		"../envs/environment.yml"
 	threads: 1
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
-		mem_mb=4048, disk_mb=20000
 	shell:
 		"""
 		mkdir -p {params.odir}
@@ -35,12 +41,12 @@ rule render_report:
 		    params = list(
 				LOCUS = "{params.locus}",
 				ASSAY = "{params.assay}",
-				hist = "{input.plt_hist}",
-				anot = "{input.plt_anot}",
-				hap1 = "{input.plt_hap1}",
-				hap2 = "{input.plt_hap2}",
-				heat = "{input.plt_heat}", 
-				res  = "{input.res_rds}"
+				hist = "{params.hist_abs}",
+				anot = "{params.anot_abs}",
+				hap1 = "{params.hap1_abs}",
+				hap2 = "{params.hap2_abs}",
+				heat = "{params.heat_abs}", 
+				res  = "{params.res_abs}"
 			)
 		)
 		'
