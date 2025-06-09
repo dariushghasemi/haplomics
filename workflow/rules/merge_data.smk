@@ -5,8 +5,8 @@ rule merge_data:
 		dosage = ws_path("dosage/{locus}.dosage"),
 		phenotype = lambda wildcards:  get_pheno(wildcards.dataset),
 	output:
-		odata = ws_path("merged_data/{locus}_{dataset}_merged_data.RDS")
-		#summ  = "results/report/{locus}_merged_data_summary.txt"
+		odata = ws_path("merged_data/{locus}_{dataset}_merged_data.RDS"),
+		summ  = ws_path("report/{locus}_{dataset}_merged_data_summary.txt"),
 	conda:
 		"../envs/environment.yml"
 	params:
@@ -23,5 +23,6 @@ rule merge_data:
 			--phenotype {input.phenotype}  \
 			--covariate {params.covariate}  \
 			--min_ac {params.min_ac} \
+			--summary {output.summ}  \
 			--output {output.odata}  2> {log}
 		"""
