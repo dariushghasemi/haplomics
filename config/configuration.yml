@@ -3,7 +3,7 @@ datasets: "phen,meta,prot"
 # pathes -> loci file should be tab-separated.
 path_loci: "config/slc34a1.txt"
 path_vcf: "data/CHRIS13K.WES.imputed.rsq03.vep.hg38.sorted.vcf.gz"
-path_rep: "/scratch/dariush.ghasemi/projects/haploAnalysis/workflow"
+path_workspace: "results/my_chris"
 phenotype_files: "data/chris_clinicals.tsv, data/chris_metabolomics.tsv, data/chris_prot.csv"
 covariates_file: "data/chris_covars.tsv"
 

@@ -2,11 +2,11 @@
 rule get_dosage:
 	input:
 		script = "workflow/scripts/01-2_extracting_dosage.sh",
-		vcf    = "results/genotype/{locus}.vcf.gz"
+		vcf    = ws_path("genotype/{locus}.vcf.gz")
 	output:
-		dosage = "results/dosage/{locus}.dosage",
-		snps   = "results/dosage/{locus}.snps",
-		bim    = "results/dosage/{locus}.bim"
+		dosage = ws_path("dosage/{locus}.dosage"),
+		snps   = ws_path("dosage/{locus}.snps"),
+		bim    = ws_path("dosage/{locus}.bim")
 	conda:
 		"../envs/environment.yml"
 	resources:

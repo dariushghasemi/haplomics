@@ -91,5 +91,8 @@ def get_region(wildcards):
 
 # define the functions generating files' path
 def ws_path(file_path):
-    return str(Path(config.get("workspace_path"), file_path))
+    return str(Path(config.get("path_workspace"), file_path))
 
+# define the functions generating files' path
+def full_path(file_path):
+   return str(os.path.abspath(Path(config.get("path_workspace"), file_path)))

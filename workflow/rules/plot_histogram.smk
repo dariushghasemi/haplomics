@@ -2,9 +2,9 @@
 rule plot_histogram:
 	input:
 		script   = "workflow/scripts/01-3_plot_histogram.R",
-		variants = "results/dosage/{locus}.bim"
+		variants = ws_path("dosage/{locus}.bim")
 	output:
-		plot = "results/plot_histogram/{locus}.png"
+		plot = ws_path("plot_histogram/{locus}.png")
 	conda:
 		"../envs/environment.yml"
 	resources:

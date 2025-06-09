@@ -3,7 +3,7 @@ rule get_locus:
 	input:
 		vcf = config["path_vcf"],
 	output:
-		ofile = "results/genotype/{locus}.vcf.gz",
+		ofile = ws_path("genotype/{locus}.vcf.gz"),
 	conda:
 		"../envs/environment.yml"
 	params:

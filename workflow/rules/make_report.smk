@@ -3,20 +3,20 @@ import os
 rule render_report:
 	input:
 		markdown = "workflow/scripts/04-0_report.qmd",
-		plt_hist = "results/plot_histogram/{locus}.png",
-		plt_anot = "results/plot_annotation/{locus}.png",
-		plt_hap1 = lambda wc: expand("results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png", locus = wc.locus, dataset = wc.dataset),
-		plt_hap2 = lambda wc: expand("results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes_shrinked.png",  locus = wc.locus, dataset = wc.dataset),
-		plt_heat = lambda wc: expand("results/plot_heatmaps/{locus}_{dataset}_plot_heatmap.png", locus = wc.locus, dataset = wc.dataset),
-		res_rds  = lambda wc: expand("results/result_tidied/{locus}_{dataset}_association_results_tidied.RDS", locus = wc.locus, dataset = wc.dataset),
+		plt_hist = ws_path("plot_histogram/{locus}.png"),
+		plt_anot = ws_path("plot_annotation/{locus}.png"),
+		plt_hap1 = lambda wc: expand(ws_path("plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png"), locus = wc.locus, dataset = wc.dataset),
+		plt_hap2 = lambda wc: expand(ws_path("plot_haplotypes/{locus}_{dataset}_plot_haplotypes_shrinked.png"),  locus = wc.locus, dataset = wc.dataset),
+		plt_heat = lambda wc: expand(ws_path("plot_heatmaps/{locus}_{dataset}_plot_heatmap.png"), locus = wc.locus, dataset = wc.dataset),
+		res_rds  = lambda wc: expand(ws_path("result_tidied/{locus}_{dataset}_association_results_tidied.RDS"), locus = wc.locus, dataset = wc.dataset),
 		#tbl_summ = "results/report/{locus}_merged_data_summary.txt",
 	output:
-		html = "results/report_html/{locus}_{dataset}.nb.html"
+		html = ws_path("report_html/{locus}_{dataset}.nb.html")
 	params:
 		locus = "{locus}",
 		assay = "{dataset}",
 		html = "{locus}_{dataset}.nb.html",
-		odir = "results/report_html/",
+		odir = ws_path("report_html/"),
 		hist_abs = lambda wc: os.path.abspath(f"results/plot_histogram/{wc.locus}.png"),
 		anot_abs = lambda wc: os.path.abspath(f"results/plot_annotation/{wc.locus}.png"),
 		hap1_abs = lambda wc: os.path.abspath(f"results/plot_haplotypes/{wc.locus}_{wc.dataset}_plot_haplotypes.png"),

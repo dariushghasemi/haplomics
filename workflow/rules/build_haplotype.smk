@@ -2,9 +2,9 @@
 rule build_haplotypes:
 	input:
 		script = "workflow/scripts/03-2_haplotypes_building.R",
-		data   = "results/merged_data/{locus}_{dataset}_merged_data.RDS"
+		data   = ws_path("merged_data/{locus}_{dataset}_merged_data.RDS"),
 	output:
-		result = "results/result_associations/{locus}_{dataset}_association_results.RDS"
+		result = ws_path("result_associations/{locus}_{dataset}_association_results.RDS")
 	conda:
 		"../envs/environment.yml"
 	params:
@@ -15,7 +15,7 @@ rule build_haplotypes:
 		n_batch = 2,
 		n_try = 2,
 	log:
-		"logs/build_haplotypes/{locus}_{dataset}.log"
+		ws_path("logs/build_haplotypes/{locus}_{dataset}.log")
 	resources:
 		runtime=lambda wc, attempt: attempt * 6000,
 	shell:

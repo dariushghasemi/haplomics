@@ -2,18 +2,18 @@
 rule plot_haplotypes:
 	input:
 		script = "workflow/scripts/03-3_haplotypes_plot.R",
-		result = "results/result_associations/{locus}_{dataset}_association_results.RDS",
-		annotation = "results/annotation/{locus}_summary.tsv",
-		variants   = "results/dosage/{locus}.bim"
+		result = ws_path("result_associations/{locus}_{dataset}_association_results.RDS"),
+		annotation = ws_path("annotation/{locus}_summary.tsv"),
+		variants   = ws_path("dosage/{locus}.bim")
 	output:
-		plt1 = "results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png",
-		plt2 = "results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes_shrinked.png"
+		plt1 = ws_path("plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png"),
+		plt2 = ws_path("plot_haplotypes/{locus}_{dataset}_plot_haplotypes_shrinked.png")
 	conda:
 		"../envs/environment.yml"
 	params:
 		region="{locus}"
 	log:
-		"logs/plot_haplotypes/{locus}_{dataset}.log"
+		ws_path("logs/plot_haplotypes/{locus}_{dataset}.log")
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
 	shell:

@@ -2,9 +2,9 @@
 rule plot_annotation:
 	input:
 		script = "workflow/scripts/01-6_plot_gennotation.R",
-		annotation = "results/annotation/{locus}_summary.tsv"
+		annotation = ws_path("annotation/{locus}_summary.tsv")
 	output:
-		plot = "results/plot_annotation/{locus}.png"
+		plot = ws_path("plot_annotation/{locus}.png")
 	conda:
 		"../envs/environment.yml"
 	resources:

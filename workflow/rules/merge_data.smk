@@ -2,10 +2,10 @@
 rule merge_data:
 	input:
 		script = "workflow/scripts/03-1_haplotypes_data.R",
-		dosage = "results/dosage/{locus}.dosage",
+		dosage = ws_path("dosage/{locus}.dosage"),
 		phenotype = lambda wildcards:  get_pheno(wildcards.dataset),
 	output:
-		odata = "results/merged_data/{locus}_{dataset}_merged_data.RDS"
+		odata = ws_path("merged_data/{locus}_{dataset}_merged_data.RDS")
 		#summ  = "results/report/{locus}_merged_data_summary.txt"
 	conda:
 		"../envs/environment.yml"

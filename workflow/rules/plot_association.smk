@@ -2,15 +2,15 @@
 rule plot_heatmap:
 	input:
 		script = "workflow/scripts/03-4_haplotypes_heatmap.R",
-		result = "results/result_associations/{locus}_{dataset}_association_results.RDS"
+		result = ws_path("result_associations/{locus}_{dataset}_association_results.RDS")
 	output:
-		plt = "results/plot_heatmaps/{locus}_{dataset}_plot_heatmap.png",
-		tbl = "results/result_signif/{locus}_{dataset}_association_results_signif.csv",
-		rds = "results/result_tidied/{locus}_{dataset}_association_results_tidied.RDS"
+		plt = ws_path("plot_heatmaps/{locus}_{dataset}_plot_heatmap.png"),
+		tbl = ws_path("result_signif/{locus}_{dataset}_association_results_signif.csv"),
+		rds = ws_path("result_tidied/{locus}_{dataset}_association_results_tidied.RDS")
 	conda:
 		"../envs/environment.yml"
 	log:
-		"logs/plot_heatmaps/{locus}_{dataset}.log"
+		ws_path("logs/plot_heatmaps/{locus}_{dataset}.log"),
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
 	shell:

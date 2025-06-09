@@ -2,10 +2,10 @@
 rule annotate_variants:
 	input:
 		vep_api = "workflow/scripts/01-6_vep_annotator.py",
-		snps    = "results/dosage/{locus}.snps",
+		snps    = ws_path("dosage/{locus}.snps"),
 	output:
-		annotation = "results/annotation/{locus}_summary.tsv",
-		json       = "results/annotation/{locus}_output.json"
+		annotation = ws_path("annotation/{locus}_summary.tsv"),
+		json       = ws_path("annotation/{locus}_output.json")
 	conda:
 		"../envs/environment.yml"
 	resources:

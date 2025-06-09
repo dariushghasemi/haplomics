@@ -3,7 +3,7 @@ datasets: "phenos,soma"
 # pathes -> loci file should be tab-separated.
 path_loci: "tests/locus_window_test.txt"
 path_vcf: "tests/chr22_no_indels_freq.vcf.gz"
-path_rep: "/scratch/dariush.ghasemi/projects/haploAnalysis/workflow"
+path_workspace: "results/my_test"
 phenotype_files: "tests/my_phenos.tsv, tests/my_soma.tsv"
 covariates_file: "tests/my_covars.tsv"
 
