@@ -51,3 +51,7 @@ dockerfile_:
 test:
 	source $(CONDA_ENV_DIR)/activate $(CONDA_ENV_NAME) && \
 	snakemake --profile slurm --snakefile workflow/test.smk
+
+dry-test:
+	source $(CONDA_ENV_DIR)/activate $(CONDA_ENV_NAME) && \
+	snakemake --sdm conda --dry-run --profile slurm --snakefile workflow/test.smk

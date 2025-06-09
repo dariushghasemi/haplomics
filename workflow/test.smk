@@ -28,7 +28,7 @@ rule all:
 		expand("results/plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png", locus = analytes.locus, dataset = df.data_type),
 		expand("results/plot_heatmaps/{locus}_{dataset}_plot_heatmap.png", locus = analytes.locus, dataset=df.data_type),
 		#expand("results/result_tidied/{locus}_{dataset}_association_results_tidied.RDS", locus = analytes.locus, dataset=df.data_type),
-		#expand("results/report_html/{locus}_report.html", locus = loci)
+		expand("results/report_html/{locus}_{dataset}.nb.html", locus = analytes.locus, dataset=df.data_type)
 
 
 include: "rules/get_locus.smk"
@@ -40,3 +40,4 @@ include: "rules/merge_data.smk"
 include: "rules/build_haplotype.smk"
 include: "rules/plot_haplotype.smk"
 include: "rules/plot_association.smk"
+include: "rules/make_report.smk"
