@@ -13,5 +13,6 @@ dependencies:
   - r-R.utils=2.12.3
   - r-haplo.stats=1.9.7
   - r-pheatmap=1.0.12
+  - r-DT=0.33
   
   
