@@ -1,10 +1,9 @@
-import os
 
 rule render_report:
 	input:
 		markdown = "workflow/scripts/04-0_report.qmd",
-		plt_heat = ws_path("plot_heatmaps/{locus}_{dataset}_plot_heatmap.png"),
-		res_rds  = ws_path("result_tidied/{locus}_{dataset}_association_results_tidied.RDS"),
+		plt_heat = lambda wc: ws_path(f"plot_heatmaps/{wc.locus}_{wc.dataset}_plot_heatmap.png"),
+		res_rds  = lambda wc: ws_path(f"result_tidied/{wc.locus}_{wc.dataset}_association_results_tidied.RDS"),
 	output:
 		html = ws_path("report_html/{locus}_{dataset}.nb.html")
 	params:
@@ -28,11 +27,18 @@ rule render_report:
 		"""
 		mkdir -p {params.odir}
 		
+        # copy the shared .qmd to a temporary .qmd per job
+        TEMP_QMD="{params.odir}/04-0_report_{params.locus}_{params.assay}.qmd"
+        cp {input.markdown} $TEMP_QMD
+		
+		echo "Rendering report for LOCUS={params.locus} ASSAY={params.assay}"
+
 		Rscript -e '
 		rmarkdown::render(
-		    input = "{input.markdown}",
+		    input = "{params.odir}/04-0_report_{params.locus}_{params.assay}.qmd",
 		    output_file = "{params.html}",
 			output_dir  = "{params.odir}",
+			clean  = TRUE,
 		    params = list(
 				LOCUS = "{params.locus}",
 				ASSAY = "{params.assay}",
@@ -40,11 +46,11 @@ rule render_report:
 				anot = "{params.anot_abs}",
 				hap1 = "{params.hap1_abs}",
 				hap2 = "{params.hap2_abs}",
-				heat = "{params.heat_abs}", 
 				heat = "{params.heat_abs}",
 				summ = "{params.tbl_summ}",
 				res  = "{params.res_abs}"
 			)
 		)
 		'
+		rm -f $TEMP_QMD
 		"""
