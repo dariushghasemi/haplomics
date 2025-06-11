@@ -24,14 +24,27 @@ The user should provide:
   - covariates file (optional; usually consisting of genomic principal components and local confounders like age, sex, etc.)
 
 Note: To skip using covariates file, the user should define below parameter in configuration:
-`covariates_file: null`
+- `covariates_file: null`
 
 
 ### Run Haplomics
 
 You can run the workflow on your local machine with cluster computing nodes using this command:
 ```bash
+# for a dry run
+make dry-run
+
+# for a real run 
 sbatch submit.sh
+```
+
+If you like to observe the expected outputs of a successful run using a properly formatted input data, please run this command:
+```bash
+# for a dry run
+make dry-test
+
+# for a real run
+sbatch submit_test.sh
 ```
 
 ### Haplomics workflow example
