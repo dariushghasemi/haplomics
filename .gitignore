@@ -26,12 +26,15 @@ rsconnect/
 # data, outputs
 data/
 logs/
-results*/
+results/chris_nopath/
+results/results_chris/
+results/*test*
+results/my_chris/genotype
+results/my_chris/dosage/
+results/my_chris/merged_data
+
 
 # Snakemake files
 .snakemake/*
-*.pdf
-*.png
-*.html
 workflow/archive/
 
