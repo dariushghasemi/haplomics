@@ -1,0 +1,8 @@
+Minimum allele count (AC) is set to 5 . Given 13447 samples, variants with AC below 5 and above 13442 are removed.
+
+
+Of 157 variants, 91 left with minor allele count > 5 for building haplotypes.
+
+
+Merged data comprised 91 variants, 172 traits, and 13 covariates.
+
