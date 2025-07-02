@@ -50,3 +50,6 @@ sbatch submit_test.sh
 ### Haplomics workflow example
 
 <img src="dag.svg" alt="example workflow">
+
+### Publication and preprint
+Manuscript preprint is availble on [medrxiv](https://www.medrxiv.org/content/10.1101/2025.06.12.25329492v1) on June 12, 2025.
