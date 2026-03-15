@@ -2,16 +2,15 @@
 rule plot_haplotypes:
 	input:
 		script = "workflow/scripts/03-3_haplotypes_plot.R",
-		result = ws_path("result_associations/{locus}_{dataset}_association_results.RDS"),
-		annotation = ws_path("annotation/{locus}_summary.tsv"),
-		variants   = ws_path("dosage/{locus}.bim")
+		rds    = rules.build_haplotypes.output.result,
+		annot  = rules.annotate_variants.output.annotation,
+		bim    = rules.get_dosage.output.bim,
 	output:
+		char = ws_path("report/{locus}_{dataset}_characteristics.tsv"),
 		plt1 = ws_path("plot_haplotypes/{locus}_{dataset}_plot_haplotypes.png"),
 		plt2 = ws_path("plot_haplotypes/{locus}_{dataset}_plot_haplotypes_shrinked.png")
 	conda:
 		"../envs/environment.yml"
-	params:
-		region="{locus}"
 	log:
 		ws_path("logs/plot_haplotypes/{locus}_{dataset}.log")
 	resources:
@@ -19,10 +18,10 @@ rule plot_haplotypes:
 	shell:
 		"""
 		Rscript {input.script}  \
-			--rds {input.result}  \
-			--annotation {input.annotation}  \
-			--variants {input.variants}  \
-			--locus {params.region}  \
-			--output1 {output.plt1}  \
-			--output2 {output.plt2} 2> {log}
+			--rds      {input.rds}  \
+			--annotation {input.annot}  \
+			--variants {input.bim}  \
+			--char     {output.char}  \
+			--plotfull {output.plt1}  \
+			--plottiny {output.plt2} 2> {log}
 		"""
