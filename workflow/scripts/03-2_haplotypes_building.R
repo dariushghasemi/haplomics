@@ -1,8 +1,16 @@
-# load libraries
-suppressMessages(library(tidyverse, quietly = TRUE))
-suppressMessages(library(haplo.stats, quietly = TRUE))
-suppressMessages(library(optparse, quietly = TRUE))
 
+#-----------------------------------------------------#
+# ------             Load libraries             ------
+#-----------------------------------------------------#
+
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(data.table)
+  library(haplo.stats)
+  library(optparse)
+})
+
+#----------#
 # Get arguments specified in the sbatch
 option_list <- list(
   make_option("--data", default=NULL, help="Merged genotype, phenotypes, and covariates file"),
@@ -18,114 +26,162 @@ opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
 #----------#
-# print time and date
-Sys.time()
+# params
+i_seed   = 777
+n_try    = opt$n_try
+n_batch  = opt$n_batch
+max_haps = opt$max_haps
+min_pp   = opt$min_pp
+min_freq = opt$min_freq
+ofile = opt$output
+cfile = opt$covariate
 
-# date
-today.date <- format(Sys.Date(), "%d-%b-%y")
+
+#-----------------------------------------------------#
+#-------                Logging              ---------
+#-----------------------------------------------------#
+
+log_message <- function(...) {
+  timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  message(timestamp, " - ", ...)
+}
 
 
 #-----------------------------------------------------#
 #-------              Import data            ---------
 #-----------------------------------------------------#
 
-cat("\nImport data...\n")
+log_message("Importing data...")
 
 # Phenotype data merged with genotypes
 merged_data <- readRDS(opt$data)
 
+log_message("Defining model formula...")
 
-# checking whether the covariate file was provided and not empty
-if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){ 
-  
-  # covariate file
-  covar_data <- data.table::fread(opt$covariate)
-  
-  # Extract covariate names excluding ids
+# check whether covariate file provided
+if (!is.null(cfile) && cfile != "" && cfile != "None") {
+
+  covar_data <- data.table::fread(cfile)
   covariates <- colnames(covar_data[, !"IID", with = FALSE])
-  
-  # Build covariate terms to adjust
-  covar_term <- paste0(covariates, collapse = " + ")
-  
-  # defining model formula with covariates
-  model_formula <- paste("trait ~ haplo_genotype +", covar_term)
-  
-} else{
-  
-  # defining model formula without covariates
-  model_formula <- paste("trait ~ haplo_genotype")
-  covariates <- NULL
+  covar_term <- paste(covariates, collapse = " + ")
 
+  mformula <- paste("trait ~ geno +", covar_term) %>% as.formula()
+  
+  } else {
+    covariates <- NULL
+    mformula <- paste0("trait ~ geno") %>% as.formula()
 }
 
+log_message("Covariates: ", covariates)
+log_message("Haplo.GLM model formula: ", mformula)
 
 
 #-----------------------------------------------------#
 #-------            Haplotype data           ---------
 #-----------------------------------------------------#
 
-cat("\nBuilding data...\n")
+log_message("Building data...")
 
 # S1: selecting the variants
 loci <- merged_data %>% dplyr::select(matches("chr[0-9]{,2}_[0-9]+_[ATCG]+_[ATCG]+"))
 
-# S2: convert the dosage to integer, then to major(1/2) or minor(1/2) alleles
-genome_binary  <- haplo.stats::geno1to2(round(loci, 0), locus.label = colnames(loci))
+# list of variants
+snps <- colnames(loci)
+
+log_message(length(snps), " variants being used to build haplotypes.")
+
+# S2: convert dosage values to major(2) or minor(1) alleles
+geno_mat <- haplo.stats::geno1to2(
+  round(loci, 0),
+  locus.label = snps
+  )
 
 # S3: setup genotype data
-haplo_genotype <- haplo.stats::setupGeno(genome_binary, miss.val = c(0, NA), locus.label = colnames(loci))
-
-# S4: GLM data (merging phenotype and genotype data)
-haplo_dataset  <- data.frame(haplo_genotype, merged_data %>% dplyr::select(-IID, -matches("chr[0-9]{,2}_[0-9]+_[ATCG]+_[ATCG]+")))
-
-#----------#
-# Number of variants
-cat("\n", ncol(loci), "SNPs used for building haplotypes at this locus.", "\n")
+geno <- haplo.stats::setupGeno(
+  geno_mat,
+  miss.val = c(0, NA),
+  locus.label = snps
+  )
 
 
 #-----------------------------------------------------#
 #-------       Haplotype reconstruction      ---------
 #-----------------------------------------------------#
 
+# NOTE: To have equal no. of haplotypes, NAs in phenotype must be imputed!
+
+# Set parameters to control EM algorithm
+em_ctrl <- haplo.stats::haplo.em.control(
+  n.try = n_try,
+  iseed = i_seed,
+  insert.batch.size = n_batch,
+  max.haps.limit = max_haps,
+  min.posterior = min_pp  # probability of trimming off rare haplotypes
+  )
+
+#----------#
+# Step 1 — Run haplotype EM once
+haplo_em <- haplo.stats::haplo.em(
+  geno        = geno,
+  control     = em_ctrl,
+  locus.label = snps
+)
+
+log_message("EM model rebuilt haplotypes using the user-specified control params.")
+
+# Step 2 — Prepare phenotype list
+phenotype_cols <- merged_data %>%
+  dplyr::select(- IID, - starts_with("chr"), - all_of(covariates)) %>%
+  colnames()
+
+phenotypes <- merged_data[phenotype_cols]
+
+log_message(length(phenotype_cols), " phenotypes being used for association test.")
+
+#----------#
 # Fitting regression model: additive haplotypes and covariate on gaussian response
 # Defining Haplo.GLM model for iteration via map function
 # recall parameters of haplo.GLM model from opt arguments
-hap_model <- function(
-    df,
-    n_try = opt$n_try,
-    n_batch  = opt$n_batch,
-    max_haps = opt$max_haps,
-    min_pp   = opt$min_pp,
-    min_freq = opt$min_freq,
-    my_formula = model_formula,
-    common_iseed = 777   # Set a common random number seed for both models
-    ){
+
+# Obtain haplotypes from model
+grep_haplo <- function(fit) {
+  summary(fit)$haplotypes %>%
+    tibble::rownames_to_column(var = "Haplotype")
+  }
+
+#----------#
+# Loop haplo.GLM through the phenotypes
+run_haplo_glm <- function(itrait, igeno, iem, iform) {
   
-  
-  # Set parameters to control EM algorithm
-  em_ctrl <- haplo.stats::haplo.em.control(
-    n.try = n_try,            # to have equal no. of haplotypes, phenotype must be imputed! 
-    iseed = common_iseed,
-    insert.batch.size = n_batch, # keep it =2 to equalize n.of haplo for all traits
-    max.haps.limit = max_haps,
-    min.posterior = min_pp  # increase the prob of trimming off rare haplo at each insertion step (raise of prob will end up qith fewer haplos)
-    )
-  
-  # fiting the model
-  model_fit <- haplo.stats::haplo.glm(
-    formula = my_formula,
-    family = gaussian,
-    data   = df,
-    na.action = "na.geno.keep",
-    locus.label = colnames(loci),
-    x = TRUE,
-    control = haplo.glm.control(
-      haplo.freq.min = min_freq, # if drop it to 0.01, then it unequlizes no. haplotypes
-      em.c = em_ctrl
+  df <- data.frame(
+    trait = itrait,
+    haplo = igeno
+  )
+
+  # add covariates if present
+  if (!is.null(covariates)) {
+    df <- cbind(df, merged_data[, covariates, drop = FALSE])
+  }
+
+  # Fitting GLM model
+  fit <- haplo.stats::haplo.glm(
+    formula     = iform,
+    family      = gaussian(),
+    data        = df,
+    x           = TRUE,
+    haplo.em    = iem,
+    locus.label = snps,
+    na.action   = "na.geno.keep",
+    control     = haplo.glm.control(
+      haplo.freq.min = min_freq
       )
     )
-  
-  return(model_fit)
+
+    list(
+      haplotype = grep_haplo(fit),
+      tidy   = broom::tidy(fit) %>% suppressWarnings(),
+      glance = broom::glance(fit)
+  )
 }
 
 #----------#
@@ -156,39 +212,46 @@ haplo_extract <- function(model) {
 #-------        Haplotype association        ---------
 #-----------------------------------------------------#
 
-cat("\nBuilding model...\n")
+log_message("Fitting haplo.GLM...")
 
-# Iterating the model on the traits
-results <- haplo_dataset %>%
-  pivot_longer(
-    cols      = - c(haplo_genotype, all_of(covariates)),
-    names_to  = "trait_name",
-    values_to = "trait"
-    ) %>%
-  group_by(trait_name) %>%
-  nest() %>%
-  dplyr::mutate(
-    model     = data  %>% map(hap_model),
-    haplotype = model %>% map(haplo_extract),
-    glance    = model %>% map(broom::glance),
-    tidy      = model %>% map(broom::tidy)
-    ) %>%
-  ungroup()
+# Step 3 — Define a list to append model outputs
+results <- vector("list", length(phenotype_cols))
+names(results) <- phenotype_cols
+
+# Step 4 — Iterating model
+for (i in seq_along(phenotype_cols)) {
+  
+  trait_name <- phenotype_cols[i]
+  trait_vec  <- merged_data[[trait_name]]
+  
+  results[[i]] <- run_haplo_glm(
+    itrait = trait_vec,
+    igeno  = geno,
+    iem    = haplo_em,
+    iform  = mformula
+  )
+  
+  if (i %% 50 == 0) {
+    gc()
+    log_message("Processed ", i, " traits")
+  }
+}
+
+log_message("Finished. Now binding list of results...")
+
+# Step 4 — Nesting outputs in a tibble
+results_tidy <- map_dfr(names(results), function(trait){
+  tibble(trait_name = trait) %>%
+    nest(.by = trait_name) %>% 
+    dplyr::mutate(
+      haplotype = list(results[[trait]]$haplotype),
+      tidy      = list(results[[trait]]$tidy),
+      glance    = list(results[[trait]]$glance)
+    )
+  }) %>%
+  dplyr::select(- data)
 
 
-results %>% unnest(tidy)
+saveRDS(results_tidy, ofile)
 
-#----------#
-# saving full model results
-
-cat("\nSaving results...\n")
-
-# Drop unnecessary results
-results_shrinked <- results %>% dplyr::select(- c(data, model, glance))
-
-# saving the results
-saveRDS(results_shrinked, opt$output)
-
-#----------#
-# print time and date
-Sys.time()
+log_message("Stored results here: ", ofile)

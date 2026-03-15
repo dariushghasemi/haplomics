@@ -2,7 +2,7 @@
 rule build_haplotypes:
 	input:
 		script = "workflow/scripts/03-2_haplotypes_building.R",
-		data   = ws_path("merged_data/{locus}_{dataset}_merged_data.RDS"),
+		data   = rules.merge_data.output.odata,
 	output:
 		result = ws_path("result_associations/{locus}_{dataset}_association_results.RDS")
 	conda:
