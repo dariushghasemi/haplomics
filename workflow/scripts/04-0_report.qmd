@@ -12,6 +12,7 @@ params:
   heat: ""
   res:  ""
   summ: ""
+  char: ""
 
 execute:
   cache: false
@@ -90,17 +91,12 @@ knitr::include_graphics(params$anot)
 #### Discriptive statistics 
 
 
-```{r summary of the datasets, echo=FALSE, message=FALSE, warning=TRUE}
+```{r Report counts, echo=FALSE, message=FALSE, warning=TRUE}
 
-#data_summ <- read.delim(file = params$summ, header = TRUE, sep = "\t", comment.char = "")
-
-#data_summ %>% knitr::kable("pipe", caption = "Table 1. Discriptive statistics of merged datasets")
+#data_summ %>% knitr::kable("pipe", caption = "Table 1. Discriptive statistics of input datasets")
 
 # Read report from file
 report_contents <- readLines(params$summ)
-
-# Print report to console
-#cat(report_contents, sep = "\n")
 
 ```
 `r report_contents`
@@ -111,7 +107,15 @@ report_contents <- readLines(params$summ)
 
 ### Haplotype plot 
 
-#### Haplotype variants
+#### Table of haplotypes
+
+```{r Haplo table, echo=FALSE, message=FALSE, warning=TRUE}
+
+char <- read.csv(params$char)
+char %>% DT::datatable(caption = "Table 1. Alleles distribution across haplotypes")
+```
+
+#### Haplotype with entire variants
 
 ```{r haplotypes, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='100%', fig.cap="Figure 3. Alleles distribution across haplotypes"}
 
@@ -122,7 +126,7 @@ knitr::include_graphics(params$hap1)
 |
 |
 
-#### Haplotype tagging variants
+#### Haplotype with only tagging variants
 
 ```{r haplotypes narrowed, figures-side, echo=FALSE, fig.show="hold", fig.align="center", out.width='100%', fig.cap="Figure 4. Haplotypes narrowed by varied variants"}
 
@@ -151,9 +155,15 @@ knitr::include_graphics(params$heat)
 ```{r significant results traits, echo=FALSE, message=FALSE, warning=TRUE}
 
 result <- readRDS(params$res)
+if (nrow(result) > 5000) {
 
-# show the results
-result %>% DT::datatable(caption = "Table 1. Results of haplotype association")
+  result %>% 
+    filter(p.value <= .05) %>% 
+    DT::datatable(caption = "Table 2. Results of haplotype association")
+  
+  } else {
+    result %>% DT::datatable(caption = "Table 2. Results of haplotype association")
+}
 ```
 
 |

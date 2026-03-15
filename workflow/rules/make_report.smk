@@ -3,7 +3,7 @@ rule render_report:
 	input:
 		markdown = "workflow/scripts/04-0_report.qmd",
 		plt_heat = lambda wc: ws_path(f"plot_heatmaps/{wc.locus}_{wc.dataset}_plot_heatmap.png"),
-		res_rds  = lambda wc: ws_path(f"result_tidied/{wc.locus}_{wc.dataset}_association_results_tidied.RDS"),
+		res_rds  = lambda wc: ws_path(f"result_associations/{wc.locus}_{wc.dataset}_tidied.RDS"),
 	output:
 		html = ws_path("report_html/{locus}_{dataset}.nb.html")
 	params:
@@ -17,7 +17,8 @@ rule render_report:
 		hap2_abs = lambda wc: full_path(f"plot_haplotypes/{wc.locus}_{wc.dataset}_plot_haplotypes_shrinked.png"),
 		heat_abs = lambda wc: full_path(f"plot_heatmaps/{wc.locus}_{wc.dataset}_plot_heatmap.png"),
 		tbl_summ = lambda wc: full_path(f"report/{wc.locus}_{wc.dataset}_merged_data_summary.txt"),
-		res_abs  = lambda wc: full_path(f"result_tidied/{wc.locus}_{wc.dataset}_association_results_tidied.RDS")
+		res_tidy = lambda wc: full_path(f"result_associations/{wc.locus}_{wc.dataset}_tidied.RDS"),
+		hap_char = lambda wc: full_path(f"report/{wc.locus}_{wc.dataset}_characteristics.tsv"),
 	conda:
 		"../envs/environment.yml"
 	threads: 1
@@ -28,14 +29,14 @@ rule render_report:
 		mkdir -p {params.odir}
 		
         # copy the shared .qmd to a temporary .qmd per job
-        TEMP_QMD="{params.odir}/04-0_report_{params.locus}_{params.assay}.qmd"
+        TEMP_QMD="{params.odir}/{params.locus}_{params.assay}.qmd"
         cp {input.markdown} $TEMP_QMD
 		
 		echo "Rendering report for LOCUS={params.locus} ASSAY={params.assay}"
 
 		Rscript -e '
 		rmarkdown::render(
-		    input = "{params.odir}/04-0_report_{params.locus}_{params.assay}.qmd",
+		    input = "{params.odir}/{params.locus}_{params.assay}.qmd",
 		    output_file = "{params.html}",
 			output_dir  = "{params.odir}",
 			clean  = TRUE,
@@ -48,7 +49,8 @@ rule render_report:
 				hap2 = "{params.hap2_abs}",
 				heat = "{params.heat_abs}",
 				summ = "{params.tbl_summ}",
-				res  = "{params.res_abs}"
+				res  = "{params.res_tidy}",
+				char = "{params.hap_char}"
 			)
 		)
 		'
