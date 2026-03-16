@@ -244,7 +244,12 @@ message(
 
 #----------#
 # shrinked haplotypes plot
-shr_plt <- data_hap_plt %>% shrinking_haplotype() %>% haplo_plot()
+if(num_snps_shr > 0){
+  shr_plt <- data_hap_plt %>% shrinking_haplotype() %>% haplo_plot()
+  } else {
+    # draw full plot if no variant permuted across haplotypes
+    shr_plt <- data_hap_plt %>% haplo_plot()
+}
 
 # draw haplotypes plot
 hap_plt <- data_hap_plt %>% haplo_plot()
