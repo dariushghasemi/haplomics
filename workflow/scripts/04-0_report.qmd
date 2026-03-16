@@ -13,6 +13,7 @@ params:
   res:  ""
   summ: ""
   char: ""
+  log: ""
 
 execute:
   cache: false
@@ -59,7 +60,7 @@ library(DT)
 |
 
 ### Introduction
-This report demonstrates results of the conducted analysis for `r params$ASSAY` at *`r params$LOCUS`*.
+This report demonstrates results of the conducted analysis for `r params$ASSAY` dataset at *`r params$LOCUS`* region.
 
 |
 |
@@ -97,7 +98,7 @@ knitr::include_graphics(params$anot)
 
 # Read report from file
 report_contents <- readLines(params$summ)
-
+haplo_plot_log <- readLines(params$log)
 ```
 `r report_contents`
 
@@ -106,6 +107,8 @@ report_contents <- readLines(params$summ)
 |
 
 ### Haplotype plot 
+
+`r haplo_plot_log`
 
 #### Table of haplotypes
 

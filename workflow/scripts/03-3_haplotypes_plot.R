@@ -234,11 +234,10 @@ num_snps_shr <- data_hap_plt %>% shrinking_haplotype() %>% distinct(ID) %>% nrow
 num_snps_plt <- data_hap_plt %>% dplyr::filter(N_allele == 2) %>% distinct(ID) %>% nrow()
 
 message(
-  "\nNo. haplotypes: ", num_haplo,
-  "\nNo. SNPs: ", num_snps,
-  "\nNo. varied SNPs: ", num_snps_plt, 
-  "\nNo. varied, bi-allelic variants shown on the plot: ", num_snps_shr,
-  "\n"
+  "In this region, ", num_haplo, " haplotypes spanning ",
+  num_snps, " variants have been reconstructed. ",
+  "Of these variants, ", num_snps_plt, " varied across the reconstructed haplotypes, and ",
+  num_snps_shr, " bi-allelic SNP among the varied variants are shown on the shrinked plot."
   )
 
 

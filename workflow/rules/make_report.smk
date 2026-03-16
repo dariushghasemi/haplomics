@@ -3,6 +3,7 @@ rule render_report:
 	input:
 		markdown = "workflow/scripts/04-0_report.qmd",
 		plt_heat = lambda wc: ws_path(f"plot_heatmaps/{wc.locus}_{wc.dataset}_plot_heatmap.png"),
+		plt_hapl = lambda wc: ws_path(f"plot_haplotypes/{wc.locus}_{wc.dataset}_plot_haplotypes.png"),
 		res_rds  = lambda wc: ws_path(f"result_associations/{wc.locus}_{wc.dataset}_tidied.RDS"),
 	output:
 		html = ws_path("report_html/{locus}_{dataset}.nb.html")
@@ -19,6 +20,7 @@ rule render_report:
 		tbl_summ = lambda wc: full_path(f"report/{wc.locus}_{wc.dataset}_merged_data_summary.txt"),
 		res_tidy = lambda wc: full_path(f"result_associations/{wc.locus}_{wc.dataset}_tidied.RDS"),
 		hap_char = lambda wc: full_path(f"report/{wc.locus}_{wc.dataset}_characteristics.tsv"),
+		hap_log  = lambda wc: full_path(f"logs/plot_haplotypes/{wc.locus}_{wc.dataset}.log"),
 	conda:
 		"../envs/environment.yml"
 	threads: 1
@@ -50,7 +52,8 @@ rule render_report:
 				heat = "{params.heat_abs}",
 				summ = "{params.tbl_summ}",
 				res  = "{params.res_tidy}",
-				char = "{params.hap_char}"
+				char = "{params.hap_char}",
+				log  = "{params.hap_log}"
 			)
 		)
 		'
