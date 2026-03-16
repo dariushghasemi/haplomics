@@ -32,7 +32,7 @@ names_bim <- c("CHROM", "POS", "ID", "REF", "ALT", "AF")
 snps_list <- data.table::fread(opt$variants, header = F, col.names = names_bim)
 
 # association results
-results <- readRDS(opt$rds)
+rds <- readRDS(opt$rds)
 
 
 #-----------------------------------------------------#
@@ -101,8 +101,10 @@ adding_annotation <- function(df) {
     join_by(snpid)
   ) %>%       # add alleles frequencies
   left_join(
-    snps_list %>% dplyr::select(ID, REF, ALT, AF),
-    join_by(ID)
+    snps_list %>%
+      mutate(SNPID = str_c(str_remove(CHROM, "chr"), POS, ALT, REF, sep = ":")) %>%
+      dplyr::select(SNPID, REF, ALT, AF),
+    join_by(ID == SNPID)
     )
 }
 
@@ -216,7 +218,7 @@ haplo_plot <- function(df) {
 #-----------------------------------------------------#
 
 # data for haplotypes plot
-data_hap_plt <- results %>% 
+data_hap_plt <- rds %>% 
   extract_haplotypes() %>% 
   adding_annotation() %>% 
   labeling_alleles() %>%
