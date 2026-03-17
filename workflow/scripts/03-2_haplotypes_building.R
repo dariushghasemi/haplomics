@@ -65,11 +65,11 @@ if (!is.null(cfile) && cfile != "" && cfile != "None") {
   covariates <- colnames(covar_data[, !"IID", with = FALSE])
   covar_term <- paste(covariates, collapse = " + ")
 
-  mformula <- paste("trait ~ geno +", covar_term) %>% as.formula()
+  mformula <- paste("trait ~ geno +", covar_term)
   
   } else {
     covariates <- NULL
-    mformula <- paste0("trait ~ geno") %>% as.formula()
+    mformula <- paste0("trait ~ geno")
 }
 
 log_message("Covariates: ", covariates)
@@ -165,7 +165,7 @@ run_haplo_glm <- function(itrait, igeno, iem, iform) {
 
   # Fitting GLM model
   fit <- haplo.stats::haplo.glm(
-    formula     = iform,
+    formula     = as.formula(iform),
     family      = gaussian(),
     data        = df,
     x           = TRUE,
@@ -184,35 +184,12 @@ run_haplo_glm <- function(itrait, igeno, iem, iform) {
   )
 }
 
-#----------#
-# Retrieving haplotypes from fitted models and their frequencies
-haplo_extract <- function(model) {
-  
-  haplo_set <- summary(model)$haplotypes %>%
-    tibble::rownames_to_column(var = "Haplotype") %>%
-    dplyr::mutate(
-      Haplotype = str_replace(
-        Haplotype,
-        "(?<=\\.)\\d{1,2}(?!\\d)",
-        sprintf("%03d", as.numeric(str_extract(Haplotype, "(?<=\\.)\\d{1,2}(?!\\d)")))
-        ),
-      Haplotype = str_replace_all(
-        Haplotype, c(
-          "haplo_genotype." = "H", 
-          "haplo.base"      = "Ref."
-          )
-        )
-      )
-  
-  return(haplo_set)
-}
-
 
 #-----------------------------------------------------#
 #-------        Haplotype association        ---------
 #-----------------------------------------------------#
 
-log_message("Fitting haplo.GLM...")
+log_message("Fitting haplo GLM...")
 
 # Step 3 — Define a list to append model outputs
 results <- vector("list", length(phenotype_cols))
