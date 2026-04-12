@@ -1,7 +1,23 @@
 
-suppressMessages(library(optparse))
-suppressMessages(library(tidyverse))
-suppressMessages(library(data.table))
+#-----------------------------------------------------#
+#-------                Logging              ---------
+#-----------------------------------------------------#
+
+# Print time & message each time
+log_message <- function(...) {
+  timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  message(timestamp, " - ", ...)
+}
+
+#-----------------------------------------------------#
+#------              Load Libraries            -------
+#-----------------------------------------------------#
+
+suppressPackageStartupMessages({
+  library(optparse)
+  library(tidyverse)
+  library(data.table)
+})
 
 # Get arguments specified in the sbatch
 option_list <- list(
@@ -15,16 +31,15 @@ option_list <- list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-cat("\nParsed parameters:\n")
-print(opt)
 
+log_message("Parsed parameters: ", opt)
 
 
 #-----------------------------------------------------#
 #-------              Import data            ---------
 #-----------------------------------------------------#
 
-cat("\nImport data...\n")
+log_message("Importing data...")
 
 
 # phenotypes
@@ -62,10 +77,10 @@ rep_l1 <- paste(
   "are removed."
   )
 
-cat(rep_l1)
+log_message("✅ Done! ", rep_l1)
 
 #----------#
-cat("\nReshape genotypes to wide...\n")
+log_message("Reshape genotypes to wide table...")
 
 # Restructuring vcf file to wide format and merged with PCs
 genome_wide <- genome %>%
@@ -86,23 +101,23 @@ genome_wide <- genome %>%
 
 # show how nany variants filtered out for AC limit
 rep_l2 <- paste(
-  "\nOf",
+  "Of",
   n_snps,
   "variants,",
   ncol(genome_wide) - 1,
   "left with minor allele count >",
   opt$min_ac,
-  "for building haplotypes.\n"
+  "for building haplotypes."
   )
 
-cat(rep_l2)
+log_message("✅ Done! ", rep_l2)
 
 
 #-----------------------------------------------------#
 #-------               Merge data            ---------
 #-----------------------------------------------------#
 
-cat("\nMerge with traits...\n")
+log_message("Merging data...")
 
 if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
   
@@ -120,10 +135,10 @@ if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
     "Merged data comprised",
     ncol(genome_wide[-1]), "variants,", 
     ncol(pheno_file[-1]), "traits, and", 
-    ncol(covar_file[-1]), "covariates.\n"
+    ncol(covar_file[-1]), "covariates."
     )
   
-  cat("Genotype merged with phenotype and covariate files.\n", rep_l3)
+  log_message("✅ Done! ", rep_l3)
   
   } else{
   # dataset containing genotypes and clinical traits
@@ -136,27 +151,27 @@ if(!is.null(opt$covariate) && opt$covariate != "" && opt$covariate != "None"){
   rep_l3 <- paste(
     "Merged data comprised",
     ncol(genome_wide[-1]), "variants,", 
-    ncol(pheno_file[-1]), "traits.\n"
+    ncol(pheno_file[-1]), "traits. No covariate file provided."
   )
   
-  cat("Genotype merged with phenotype; no covariate file provided.\n", rep_l3)
+  log_message("✅ Done! ", rep_l3)
   }
 
-
-cat("Merged file looks like this:\n")
-str(merged_file)
-
 #----------#
-cat("\nSave the report...\n")
+log_message("Saving the report...")
 
 # Combine and save report to file
-full_report <- paste(rep_l1, rep_l2, rep_l3, sep = "\n\n")
+full_report <- paste(rep_l1, rep_l2, rep_l3, sep = " ")
 
 # Save report to file
 writeLines(full_report, con = opt$summary)
 
+log_message("✅ Done! Find it here: ", opt$summary)
+
 #----------#
-cat("\nSave merged dataset...\n")
+log_message("Saving merged data...")
 
 # save the merged data
 saveRDS(merged_file, file = opt$output)
+
+log_message("✅ Done! Find it here: ", opt$output)
