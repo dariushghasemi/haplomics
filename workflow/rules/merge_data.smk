@@ -13,7 +13,7 @@ rule merge_data:
 		covariate = config.get("covariates_file"),
 		min_ac = config.get("thresholds").get("min_ac"),
 	log:
-		"logs/merged_data/{locus}_{dataset}_merged_data.log"
+		ws_path("logs/merged_data/{locus}_{dataset}_merged_data.log"),
 	resources:
 		runtime=lambda wc, attempt: attempt * 30,
 	shell:
