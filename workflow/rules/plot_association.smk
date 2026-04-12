@@ -4,7 +4,7 @@ rule plot_heatmap:
 		RDS = rules.build_haplotypes.output.result
 	output:
 		plt = ws_path("plot_heatmaps/{locus}_{dataset}_plot_heatmap.png"),
-		rds = ws_path("result_associations/{locus}_{dataset}_tidied.RDS")
+		rds = ws_path("results/{locus}_{dataset}_tidied.RDS")
 	conda:
 		"../envs/environment.yml"
 	log:

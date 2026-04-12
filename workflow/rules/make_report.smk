@@ -4,7 +4,7 @@ rule render_report:
 		markdown = "workflow/scripts/04-0_report.qmd",
 		plt_heat = lambda wc: ws_path(f"plot_heatmaps/{wc.locus}_{wc.dataset}_plot_heatmap.png"),
 		plt_hapl = lambda wc: ws_path(f"plot_haplotypes/{wc.locus}_{wc.dataset}_plot_haplotypes.png"),
-		res_rds  = lambda wc: ws_path(f"result_associations/{wc.locus}_{wc.dataset}_tidied.RDS"),
+		res_rds  = lambda wc: ws_path(f"results/{wc.locus}_{wc.dataset}_tidied.RDS"),
 	output:
 		html = ws_path("report_html/{locus}_{dataset}.nb.html")
 	params:

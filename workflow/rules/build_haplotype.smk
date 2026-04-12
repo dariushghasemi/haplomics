@@ -4,7 +4,7 @@ rule build_haplotypes:
 		script = "workflow/scripts/03-2_haplotypes_building.R",
 		data   = rules.merge_data.output.odata,
 	output:
-		result = ws_path("result_associations/{locus}_{dataset}_association_results.RDS")
+		result = ws_path("results/{locus}_{dataset}_association_results.RDS")
 	conda:
 		"../envs/environment.yml"
 	params:
