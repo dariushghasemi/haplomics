@@ -163,25 +163,51 @@ run_haplo_glm <- function(itrait, igeno, iem, iform) {
     df <- cbind(df, merged_data[, covariates, drop = FALSE])
   }
 
-  # Fitting GLM model
-  fit <- haplo.stats::haplo.glm(
-    formula     = as.formula(iform),
-    family      = gaussian(),
-    data        = df,
-    x           = TRUE,
-    haplo.em    = iem,
-    locus.label = snps,
-    na.action   = "na.geno.keep",
-    control     = haplo.glm.control(
-      haplo.freq.min = min_freq
+  res <- tryCatch({
+    
+    # Fitting GLM model
+    fit <- haplo.stats::haplo.glm(
+      formula     = as.formula(iform),
+      family      = gaussian(),
+      data        = df,
+      x           = TRUE,
+      haplo.em    = iem,
+      locus.label = snps,
+      na.action   = "na.geno.keep",
+      control     = haplo.glm.control(
+        haplo.freq.min = min_freq
+        )
       )
-    )
 
-    list(
-      haplotype = grep_haplo(fit),
-      tidy   = broom::tidy(fit) %>% suppressWarnings(),
-      glance = broom::glance(fit)
-  )
+      list(
+        haplotype = grep_haplo(fit),
+        tidy   = broom::tidy(fit) %>% suppressWarnings(),
+        glance = broom::glance(fit)
+        )
+  }, warning = function(w) {
+
+    message("Warning: ", conditionMessage(w))
+
+    return(list(
+      tidy   = NULL,
+      glance = NULL,
+      error  = TRUE,
+      message = conditionMessage(w)
+    ))
+
+  }, error = function(e) {
+
+    message("Error: ", conditionMessage(e))
+
+    return(list(
+      tidy   = NULL,
+      glance = NULL,
+      error  = TRUE,
+      message = conditionMessage(e)
+    ))
+  })
+
+  return(res)
 }
 
 
@@ -223,7 +249,9 @@ results_tidy <- map_dfr(names(results), function(trait){
     dplyr::mutate(
       haplotype = list(results[[trait]]$haplotype),
       tidy      = list(results[[trait]]$tidy),
-      glance    = list(results[[trait]]$glance)
+      glance    = list(results[[trait]]$glance),
+      error     = list(results[[trait]]$error),
+      message   = list(results[[trait]]$message)
     )
   }) %>%
   dplyr::select(- data)
