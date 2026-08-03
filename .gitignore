@@ -32,7 +32,8 @@ results/*test*
 results/my_chris/genotype
 results/my_chris/dosage/
 results/my_chris/merged_data
-
+results/
+ukbb/
 
 # Snakemake files
 .snakemake/*
