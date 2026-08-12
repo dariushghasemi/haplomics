@@ -29,6 +29,8 @@ set-resources:
         mem_mb: 8000 + attempt * 2048
     get_dosage:
         mem_mb: 8000 + attempt * 2048
+    phased_haplotype:
+        mem_mb: 8000 + attempt * 2048
     plot_histogram:
         mem_mb: 512 + attempt * 512
     annotate_variants: 
@@ -49,4 +51,6 @@ set-resources:
     render_report:
         mem_mb: 2048 + attempt * 2048
         disk_mb: 20000
+    compute_matrix:
+        mem_mb: 3000 + attempt * 2048
     
