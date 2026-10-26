@@ -42,8 +42,9 @@ log_message <- function(...) {
 # path_pipe <- "/scratch/dariush.ghasemi/projects/haplomics/"
 # 
 # path_haplo <- glue(path_pipe, "results/ukb_50k/phased/chr7_19k_20k_5snps.dosage.tsv")
-pheno_file <- glue(path_pipe, "ukbb/pheno_50k.csv")
+#pheno_file <- glue(path_pipe, "ukbb/pheno_50k.csv")
 
+#haplo <- read.table(path_haplo, header = TRUE, sep = "\t")
 haplo <- read.table(haplo_file, header = TRUE, sep = "\t")
 pheno <- fread(pheno_file, header = TRUE, sep = ",")
 
@@ -54,7 +55,7 @@ covar_term <- paste(covariates, collapse = " + ")
 mformula   <- paste("trait ~", covar_term)
 
 merged_data <- merge(pheno, haplo, by.x = "IID", by.y = "sample_id")
-covar_df <- merged_data[covariates]
+#covar_df <- merged_data[covariates]
 
 
 #----------#
@@ -142,17 +143,20 @@ for (i in seq_along(phenotypes)) {
 log_message("Finished. Now binding list of results...")
 
 # Step 4 — Nesting outputs in a tibble
-results_tidy <- map_dfr(names(results), function(trait){
-  tibble(trait_name = trait) %>%
-    nest(.by = trait_name) %>% 
-    dplyr::mutate(
-      #haplotype = list(results[[trait]]$haplotype),
-      tidy      = list(results[[trait]]$tidy),
-      glance    = list(results[[trait]]$glance),
-      error     = list(results[[trait]]$error),
-      message   = list(results[[trait]]$message)
-    )
-}) %>%
+results_tidy <- map_dfr(
+  names(results),
+  function(trait){
+    tibble(trait_name = trait) %>%
+      nest(.by = trait_name) %>% 
+      dplyr::mutate(
+        #haplotype = list(results[[trait]]$haplotype),
+        tidy      = list(results[[trait]]$tidy),
+        glance    = list(results[[trait]]$glance),
+        error     = list(results[[trait]]$error),
+        message   = list(results[[trait]]$message)
+      )
+    }
+  ) %>%
   dplyr::select(- data)
 
 
