@@ -45,12 +45,14 @@ def main():
 
             fields = line.rstrip("\n").split("\t")
 
-            if len(fields) < 3:
+            if len(fields) < 5:
                 sys.exit(f"Malformed line: {line}")
 
             chrom = fields[0]
             pos = fields[1]
-            gts = fields[2:]
+            ref = fields[2]
+            alt = fields[3]
+            gts = fields[4:]
 
             if len(gts) != len(samples):
                 sys.exit(
@@ -58,7 +60,7 @@ def main():
                     f"Found {len(gts)} genotypes but {len(samples)} samples."
                 )
 
-            variants.append((chrom, pos))
+            variants.append((chrom, pos, ref, alt))
             rows.append(gts)
 
     n_variants = len(rows)
@@ -139,9 +141,9 @@ def main():
 
     # Output variant list
     with open(args.out_prefix + ".variants.tsv", "w") as out:
-        out.write("variant_index\tchrom\tpos\n")
-        for i, (chrom, pos) in enumerate(variants, start=1):
-            out.write(f"{i}\t{chrom}\t{pos}\n")
+        out.write("variant_index\tchrom\tpos\tref\talt\n")
+        for i, (chrom, pos, ref, alt) in enumerate(variants, start=1):
+            out.write(f"{i}\t{chrom}\t{pos}\t{ref}\t{alt}\n")
 
     # Output haplotype frequencies
     with open(args.out_prefix + ".frequencies.tsv", "w") as out:

@@ -12,7 +12,7 @@ rule get_phasing:
         runtime=lambda wc, attempt: attempt * 30,
     shell:
         """
-        bcftools query -f '%CHROM\t%POS[\t%GT]\n' {input} > {output.gt}
+        bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%GT]\n' {input} > {output.gt}
         bcftools query -l {input} > {output.samples}
         """
 
@@ -21,10 +21,15 @@ rule compute_matrix:
     input:
         phasing = rules.get_phasing.output.gt,
         samples = rules.get_phasing.output.samples,
-    output:
-        sentinel = ws_path("phased/{locus}.sentinel"),
-    params:
         script = "workflow/scripts/02-1_haplotype_matrix.py",
+    output:
+        variants=ws_path("phased/{locus}.variants.tsv"),
+        frequencies=ws_path("phased/{locus}.frequencies.tsv"),
+        sample_haplotypes=ws_path("phased/{locus}.sample_haplotypes.tsv"),
+        dosage=ws_path("phased/{locus}.dosage.tsv"),
+        #metadata=ws_path("phased/{locus}.metadata.json"),
+        sentinel=touch(ws_path("phased/{locus}.sentinel")),
+    params:
         min_freq = config.get("thresholds").get("min_freq"),
         prefix = lambda wc, output: output.sentinel.replace(".sentinel", ""),
     conda:
@@ -37,11 +42,9 @@ rule compute_matrix:
 		module load python-3.9.10/py-requests/2.31.0
 		module load python-3.9.10/py-pandas/1.5.3
         
-        python {params.script} \
+        python {input.script} \
             --gt       {input.phasing} \
             --samples  {input.samples} \
             --min-freq {params.min_freq} \
             --out-prefix {params.prefix}
-        
-        touch {output.sentinel}
         """
