@@ -1,0 +1,6 @@
+name: Python for charts
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - matplotlib=3.10.8
