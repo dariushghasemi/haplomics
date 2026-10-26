@@ -39,3 +39,6 @@ ukbb/
 .snakemake/*
 workflow/archive/
 
+
+config/config_*.yml
+config/*.txt
