@@ -1,7 +1,7 @@
 
 rule plot_haplotypes:
     input:
-        freqs = ws_path("phased/{locus}.frequencies.tsv"),
+        freqs = rules.compute_matrix.output.frequencies,
         variants = rules.compute_matrix.output.variants,
         script = "workflow/scripts/haplotypes_plot_phased.py"
     output:
