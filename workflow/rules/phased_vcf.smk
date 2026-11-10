@@ -23,12 +23,12 @@ rule compute_matrix:
         samples = rules.get_phasing.output.samples,
         script = "workflow/scripts/02-1_haplotype_matrix.py",
     output:
-        variants=ws_path("phased/{locus}.variants.tsv"),
-        frequencies=ws_path("phased/{locus}.frequencies.tsv"),
-        sample_haplotypes=ws_path("phased/{locus}.sample_haplotypes.tsv"),
-        dosage=ws_path("phased/{locus}.dosage.tsv"),
+        variants=ws_path("haplotypes/{locus}.variants.tsv"),
+        frequencies=ws_path("haplotypes/{locus}.frequencies.tsv"),
+        sample_haplotypes=ws_path("haplotypes/{locus}.sample_haplotypes.tsv"),
+        dosage=ws_path("haplotypes/{locus}.dosage.tsv"),
         #metadata=ws_path("phased/{locus}.metadata.json"),
-        sentinel=touch(ws_path("phased/{locus}.sentinel")),
+        sentinel=touch(ws_path("haplotypes/{locus}.sentinel")),
     params:
         min_freq = config.get("thresholds").get("min_freq"),
         prefix = lambda wc, output: output.sentinel.replace(".sentinel", ""),
@@ -42,9 +42,10 @@ rule compute_matrix:
 		module load python-3.9.10/py-requests/2.31.0
 		module load python-3.9.10/py-pandas/1.5.3
         
-        python {input.script} \
+        python3 {input.script} \
             --gt       {input.phasing} \
             --samples  {input.samples} \
             --min-freq {params.min_freq} \
+            --allow-unphased-test \
             --out-prefix {params.prefix}
         """
