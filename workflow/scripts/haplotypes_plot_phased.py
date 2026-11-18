@@ -56,7 +56,7 @@ def read_inputs(frequencies, snps, indexed_variants=False):
                              ref=fields[2], alt=fields[3].split(",")))
     if not variants:
         raise ValueError("The SNP file is empty.")
-    rows, seen = [], set()
+    rows, seen, seen_compositions = [], set(), set()
     with frequencies.open(encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
         required = {"haplotype", "count", "frequency", "status"}
@@ -67,7 +67,16 @@ def read_inputs(frequencies, snps, indexed_variants=False):
             if hap in seen:
                 raise ValueError(f"Duplicate haplotype on TSV line {line_number}: {hap}")
             seen.add(hap)
-            tokens = hap.split("-")
+            # New tables carry short IDs and an explicit composition dictionary.
+            # Older standalone tables put the composition in 'haplotype'.
+            composition = record["composition"].strip() if "composition" in record else hap
+            if "composition" in record and (not hap.startswith("H") or not hap[1:].isdigit()
+                                             or int(hap[1:]) < 1 or hap != f"H{int(hap[1:])}"):
+                raise ValueError(f"Invalid haplotype ID on TSV line {line_number}: {hap!r}")
+            if composition in seen_compositions:
+                raise ValueError(f"Duplicate composition on TSV line {line_number}: {composition}")
+            seen_compositions.add(composition)
+            tokens = composition.split("-")
             if len(tokens) != len(variants):
                 raise ValueError(f"TSV line {line_number}: {len(tokens)} alleles but {len(variants)} SNPs")
             alleles = []
@@ -84,12 +93,19 @@ def read_inputs(frequencies, snps, indexed_variants=False):
             if not math.isfinite(frequency) or not 0 <= frequency <= 1:
                 raise ValueError(f"Invalid frequency on TSV line {line_number}")
             status = record["status"].strip()
-            identity = "\n".join(v["id"] for v in variants) + "\n" + hap
-            rows.append(dict(haplotype=hap, alleles=alleles, count=count,
+            construction_mode = record.get("construction_mode", "phased").strip()
+            if construction_mode not in {"phased", "unphased_test"}:
+                raise ValueError(f"Invalid construction_mode on TSV line {line_number}: {construction_mode!r}")
+            identity = "\n".join(v["id"] for v in variants) + "\n" + composition
+            rows.append(dict(haplotype=hap, composition=composition, alleles=alleles, count=count,
                              frequency=frequency, status=status,
+                             construction_mode=construction_mode,
+                             label=hap if "composition" in record else None,
                              id="H" + hashlib.sha256(identity.encode()).hexdigest()[:12]))
     if not rows or sum(r["count"] for r in rows) <= 0:
         raise ValueError("The frequency table must contain a positive total count.")
+    if len({r["construction_mode"] for r in rows}) != 1:
+        raise ValueError("Frequency table mixes phased and unphased_test construction modes")
     # Allow rounding of the frequency column (the example uses eight decimals).
     tolerance = max(1e-6, len(rows) * 5.1e-9)
     if abs(sum(r["frequency"] for r in rows) - 1) > tolerance:
@@ -97,7 +113,10 @@ def read_inputs(frequencies, snps, indexed_variants=False):
     total = sum(r["count"] for r in rows)
     if any(abs(r["frequency"] - r["count"] / total) > 1e-6 for r in rows):
         raise ValueError("Counts and frequencies disagree (absolute tolerance 1e-6).")
-    rows.sort(key=lambda r: (-r["frequency"], r["haplotype"]))
+    rows.sort(key=lambda r: (-r["count"], r["composition"]))
+    for index, row in enumerate(rows, 1):
+        if row["label"] is None:
+            row["label"] = f"H{index}"
     return variants, rows
 
 
@@ -130,11 +149,13 @@ def draw_page(plt, np, colors, variants, rows, all_rows, reference, args, page, 
               row_start, variant_start, shown_frequency):
     n, m = len(rows), len(variants)
     width = max(9, 4.5 + 0.50 * m)
-    height = 3.3 + 0.42 * n
+    test_mode = args.construction_mode == "unphased_test"
+    extra_header = 0.3 if test_mode else 0
+    height = 3.3 + extra_header + 0.42 * n
     fig = plt.figure(figsize=(width, height), facecolor="white")
     grid = fig.add_gridspec(1, 2, width_ratios=[max(2.4, 0.50*m), 2.0],
                            left=0.25, right=0.97, bottom=1.05/height,
-                           top=1-2.05/height, wspace=0.12)
+                           top=1-(2.05+extra_header)/height, wspace=0.12)
     ax = fig.add_subplot(grid[0, 0])
     table = fig.add_subplot(grid[0, 1], sharey=ax)
     ax.imshow(np.zeros((n,m)), cmap=colors.ListedColormap(["#edf1f5"]), aspect="auto",
@@ -142,7 +163,7 @@ def draw_page(plt, np, colors, variants, rows, all_rows, reference, args, page, 
     ax.set_xticks(range(m), [v["id"] for v in variants], rotation=55, ha="left",
                   rotation_mode="anchor", fontsize=11)
     ax.xaxis.tick_top()
-    labels = [r["haplotype"] if len(r["alleles"]) <= 12 else r["id"] for r in rows]
+    labels = [r["label"] for r in rows]
     labels = [label + " (reference)" if r["status"] == "reference" else label
               for label,r in zip(labels,rows)]
     ax.set_yticks(range(n), labels, fontsize=11)
@@ -181,6 +202,10 @@ def draw_page(plt, np, colors, variants, rows, all_rows, reference, args, page, 
     fig.text(0.03, 1-0.76/height,
              f"Page {page}/{pages}: rows {row_start+1}–{row_start+n}, variants {variant_start+1}–{variant_start+m}",
              fontsize=10, color="#526577")
+    if test_mode:
+        fig.text(0.03, 1-1.03/height,
+                 "TEST ONLY: synthetic haplotypes from unphased GTs; phase was not inferred.",
+                 fontsize=10, color="#a33b20", fontweight="bold")
     omitted = len(all_rows)-args.selected_count
     rare = [r for r in all_rows if r["status"] == "rare"]
     rare_pct = sum(r["frequency"] for r in rare)*100
@@ -188,11 +213,12 @@ def draw_page(plt, np, colors, variants, rows, all_rows, reference, args, page, 
              "Blank cell: same allele as the reference haplotype. Period (.): missing allele.",
              fontsize=10, color="#526577")
     fig.text(0.03, 0.44/height,
-             f"Dropped {len(rare):,} rare haplotypes ({rare_pct:.3f}% of all copies). "
-             f"Shown: {args.selected_count:,} haplotypes ({shown_frequency*100:.3f}%).",
+             f"Rare (pooled; omitted from allele rows): {len(rare):,} haplotypes, "
+             f"{count_label(sum(r['count'] for r in rare))} copies ({rare_pct:.3f}%).",
              fontsize=10, color="#526577")
     fig.text(0.03, 0.18/height,
-             f"Other omitted haplotypes: {omitted-len(rare):,}. Percentages use all counted copies.",
+             f"Shown: {args.selected_count:,} ({shown_frequency*100:.3f}%). "
+             f"Other omitted: {omitted-len(rare):,}. Percentages use all copies.",
              fontsize=10, color="#526577")
     return fig
 
@@ -221,6 +247,7 @@ def main():
     try:
         variant_path = args.variants if args.variants is not None else args.snps
         variants, rows = read_inputs(args.frequencies, variant_path, indexed_variants=args.variants is not None)
+        args.construction_mode = rows[0]["construction_mode"]
         references = [r for r in rows if r["status"] == "reference"]
         if len(references) != 1:
             raise ValueError("Exactly one haplotype must have status 'reference' for allele comparison.")
@@ -245,7 +272,8 @@ def main():
     shown_frequency = sum(r["frequency"] for r in selected)
     pages = math.ceil(len(selected)/args.rows_per_page)*math.ceil(len(variants)/args.variants_per_page)
     prefix = str(args.output_prefix)
-    manifest = dict(schema_version=2, matplotlib_version=matplotlib.__version__,
+    manifest = dict(schema_version=4, matplotlib_version=matplotlib.__version__,
+                    construction_mode=args.construction_mode,test_only=args.construction_mode == "unphased_test",
                     python_version=platform.python_version(), numpy_version=np.__version__,
                     script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                     parameters={k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()},
@@ -256,6 +284,7 @@ def main():
                     dropped_rare_haplotypes=sum(r["status"] == "rare" for r in rows),
                     dropped_rare_frequency=sum(r["frequency"] for r in rows if r["status"] == "rare"),
                     reference_haplotype_id=reference["id"],
+                    reference_haplotype_label=reference["label"],
                     selected_frequency=shown_frequency, preview_page=1, pages=[])
     with PdfPages(prefix+".pdf", metadata={"Title":args.title or args.frequencies.stem,
                                          "CreationDate":None,"ModDate":None}) as pdf:
@@ -266,10 +295,6 @@ def main():
                 page += 1
                 block = variants[variant_start:variant_start+args.variants_per_page]
                 sliced = [dict(r,alleles=r["alleles"][variant_start:variant_start+len(block)]) for r in group]
-                # Label long haplotypes consistently on every variant block.
-                for r in sliced:
-                    if len(variants)>12:
-                        r["haplotype"] = r["id"]
                 fig = draw_page(plt,np,colors,block,sliced,rows,reference,args,page,pages,
                                 row_start,variant_start,shown_frequency)
                 pdf.savefig(fig)
