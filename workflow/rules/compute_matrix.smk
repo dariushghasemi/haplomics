@@ -13,6 +13,7 @@ rule compute_matrix:
 		sentinel=touch(ws_path("haplotypes/{locus}.sentinel")),
 	params:
 		min_freq = config.get("thresholds").get("min_freq"),
+		unphased_flag="--allow-unphased-test" if config.get("allow_unphased_testing", False) else "",
 		prefix = lambda wc, output: output.sentinel.replace(".sentinel", ""),
 	conda:
 		"../envs/environment.yml"
@@ -30,6 +31,5 @@ rule compute_matrix:
             --gt       {input.phasing} \
             --samples  {input.samples} \
             --min-freq {params.min_freq} \
-            --allow-unphased-test \
-            --out-prefix {params.prefix}
+            --out-prefix {params.prefix} {params.unphased_flag}
 		"""
