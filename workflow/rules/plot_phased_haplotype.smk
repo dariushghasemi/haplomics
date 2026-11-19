@@ -20,6 +20,8 @@ rule plot_haplotypes:
         "../envs/python.yaml"
     #log:
     #    ws_path("logs/plot_haplotypes/{locus}.log")
+    benchmark:
+        ws_path("benchmarks/plot_haplotype/{locus}.tsv")
     resources:
         runtime=lambda wc, attempt: attempt * 30,
     threads: 1

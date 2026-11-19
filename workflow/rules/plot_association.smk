@@ -11,6 +11,8 @@ rule plot_heatmap:
 		"../envs/environment.yml"
 	log:
 		ws_path("logs/plot_heatmaps/{locus}_{dataset}.log"),
+	benchmark:
+		ws_path("benchmarks/plot_heatmap/{locus}_{dataset}.tsv")
 	resources:
 		runtime=lambda wc, attempt: attempt * 270,
 	script:
